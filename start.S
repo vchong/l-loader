@@ -32,8 +32,8 @@ android_magic:
 	.word	0			@ LLOADER_END in RAM
 
 entries:
-	@ 5 entries with 7 words
-	.space	140
+	@ 6 entries with 7 words
+	.space	168
 
 	.align	7
 
