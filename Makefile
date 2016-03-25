@@ -3,7 +3,7 @@ CC=$(CROSS_COMPILE)gcc
 LD=$(CROSS_COMPILE)ld
 OBJCOPY=$(CROSS_COMPILE)objcopy
 BL1=bl1.bin
-FWU=fwu_fip.bin
+BL2U=bl2u.bin
 PTABLE_LST:=aosp-4g aosp-8g linux-4g linux-8g
 
 all: l-loader.bin ptable.img
@@ -11,7 +11,7 @@ all: l-loader.bin ptable.img
 l-loader.bin: start.o debug.o $(BL1)
 	$(LD) -Bstatic -Tl-loader.lds -Ttext 0xf9800800 start.o debug.o -o loader
 	$(OBJCOPY) -O binary loader temp
-	python gen_loader.py -o $@ --img_loader=temp --img_bl1=$(BL1) --img_fwu=$(FWU)
+	python gen_loader.py -o $@ --img_loader=temp --img_bl1=$(BL1) --img_bl2u=$(BL2U)
 	rm -f loader temp
 
 ptable.img:
