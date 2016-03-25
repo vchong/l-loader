@@ -20,7 +20,7 @@ class generator(object):
     #
     # struct entry_head {
     #       unsigned char   magic[8];           @ ENTY
-    #       unsigned char   name[8];            @ loader/bl1/fwu
+    #       unsigned char   name[8];            @ loader/bl1/bl2u
     #       unsigned int    start_lba;
     #       unsigned int    count_lba;
     #       unsigned int    flag;               @ boot partition or not
@@ -28,7 +28,7 @@ class generator(object):
     # size of struct entry_head is 28
     #
 
-    s1_entry_name = ['loader', 'bl1', 'fwu']
+    s1_entry_name = ['loader', 'bl1', 'bl2u']
     s2_entry_name = ['primary', 'second']
 
     block_size = 512
@@ -114,7 +114,7 @@ class generator(object):
                 if self.idx == 0:
                     self.p_entry = 28
                 elif (self.idx > 1):
-                    # image: fwu
+                    # image: bl2u
                     if (self.p_file < lba * self.block_size):
                         self.p_file = lba * self.block_size
             elif (self.stage == 2):
@@ -191,12 +191,12 @@ class generator(object):
             self.fp.write(byte)
         self.fp.close()
 
-    def create_stage1(self, img_loader, img_bl1, img_fwu, output_img):
+    def create_stage1(self, img_loader, img_bl1, img_bl2u, output_img):
         print '+-----------------------------------------------------------+'
         print ' Input Images:'
         print '     loader:                       ', img_loader
         print '     bl1:                          ', img_bl1
-        print '     fwu:                          ', img_fwu
+        print '     bl2u:                         ', img_bl2u
         print ' Ouput Image:                      ', output_img
         print '+-----------------------------------------------------------+\n'
 
@@ -208,8 +208,9 @@ class generator(object):
         print 'self.idx: ', self.idx
         # bl1.bin starts from 4KB
         self.add(8, img_bl1)      # img_bl1 doesn't exist in partition table
-        # fwu.bin starts from 64KB
-        self.add(128, img_fwu)    # img_fwu doesn't exist in partition table
+        if img_bl2u != 0:
+            # bl2u.bin starts from 96KB
+            self.add(192, img_bl2u)    # img_bl2u doesn't exist in partition table
 
     def create_stage2(self, img_prm_ptable, img_sec_ptable, output_img):
         print '+-----------------------------------------------------------+'
@@ -233,14 +234,15 @@ def main(argv):
     stage2 = 0
     img_prm_ptable = "primary partition table"
     img_sec_ptable = "secondary partition table"
+    img_bl2u = 0
     try:
-        opts, args = getopt.getopt(argv,"ho:",["img_loader=","img_bl1=","img_fwu=","img_prm_ptable=","img_sec_ptable="])
+        opts, args = getopt.getopt(argv,"ho:",["img_loader=","img_bl1=","img_bl2u=","img_prm_ptable=","img_sec_ptable="])
     except getopt.GetoptError:
-        print 'gen_loader.py -o <l-loader.bin> --img_loader <l-loader> --img_bl1 <bl1.bin> --img_fwu <fwu_fip.bin> --img_prm_ptable <prm_ptable.img> --img_sec_ptable <sec_ptable.img>'
+        print 'gen_loader.py -o <l-loader.bin> --img_loader <l-loader> --img_bl1 <bl1.bin> --img_bl2u <bl2u.bin> --img_prm_ptable <prm_ptable.img> --img_sec_ptable <sec_ptable.img>'
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print 'gen_loader.py -o <l-loader.bin> --img_loader <l-loader> --img_bl1 <bl1.bin> --img_fwu <fwu_fip.bin> --img_prm_ptable <prm_ptable.img> --img_sec_ptable <sec_ptable.img>'
+            print 'gen_loader.py -o <l-loader.bin> --img_loader <l-loader> --img_bl1 <bl1.bin> --img_bl2u <bl2u.bin> --img_prm_ptable <prm_ptable.img> --img_sec_ptable <sec_ptable.img>'
             sys.exit(1)
         elif opt == '-o':
             output_img = arg
@@ -250,8 +252,8 @@ def main(argv):
         elif opt in ("--img_bl1"):
             img_bl1 = arg
             stage1 = 1
-        elif opt in ("--img_fwu"):
-            img_fwu = arg
+        elif opt in ("--img_bl2u"):
+            img_bl2u = arg
             stage1 = 1
         elif opt in ("--img_prm_ptable"):
             img_prm_ptable = arg
@@ -270,7 +272,7 @@ def main(argv):
         print 'No input images are specified.'
         sys.exit(1)
     elif stage1 == 1:
-        loader.create_stage1(img_loader, img_bl1, img_fwu, output_img)
+        loader.create_stage1(img_loader, img_bl1, img_bl2u, output_img)
     elif stage2 == 1:
         loader.create_stage2(img_prm_ptable, img_sec_ptable, output_img)
 
