@@ -112,11 +112,13 @@ class generator(object):
                 # Boot Area1 in eMMC
                 bootp = 1
                 if self.idx == 0:
+                    # both loader and bl1.bin locates in l-loader.bin bias 2KB
                     self.p_entry = 28
                 elif (self.idx > 1):
                     # image: bl2u
-                    if (self.p_file < lba * self.block_size):
-                        self.p_file = lba * self.block_size
+                    # bl2u should locates in l-loader.bin bias 2KB too
+                    if (self.p_file < (lba * self.block_size - 2048)):
+                        self.p_file = lba * self.block_size - 2048
             elif (self.stage == 2):
                 # User Data Area in eMMC
                 bootp = 0
@@ -149,6 +151,7 @@ class generator(object):
             fimg = open(fname, "rb")
             for i in range (0, blocks):
                 buf = fimg.read(self.block_size)
+                # loader's p_file is 0 at here
                 self.fp.seek(self.p_file)
                 self.fp.write(buf)
                 # p_file is the file pointer of the new binary file
