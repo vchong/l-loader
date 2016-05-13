@@ -1,11 +1,15 @@
-CROSS_COMPILE=arm-linux-gnueabihf-
+CROSS_COMPILE?=arm-linux-gnueabihf-
 CC=$(CROSS_COMPILE)gcc
+CFLAGS=-march=armv7-a
 LD=$(CROSS_COMPILE)ld
 OBJCOPY=$(CROSS_COMPILE)objcopy
 BL1=bl1.bin
 PTABLE_LST:=aosp-4g aosp-8g linux-4g linux-8g
 
 all: l-loader.bin ptable.img
+
+%.o: %.S $(DEPS)
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 l-loader.bin: start.o debug.o $(BL1)
 	$(LD) -Bstatic -Tl-loader.lds -Ttext 0xf9800800 start.o debug.o -o loader
