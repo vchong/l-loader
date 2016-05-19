@@ -11,8 +11,8 @@ all: l-loader.bin ptable.img
 %.o: %.S $(DEPS)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-l-loader.bin: start.o debug.o $(BL1)
-	$(LD) -Bstatic -Tl-loader.lds -Ttext 0xf9800800 start.o debug.o -o loader
+l-loader.bin: start.o $(BL1)
+	$(LD) -Bstatic -Tl-loader.lds -Ttext 0xf9800800 start.o -o loader
 	$(OBJCOPY) -O binary loader temp
 	python gen_loader.py -o $@ --img_loader=temp --img_bl1=$(BL1)
 	rm -f loader temp

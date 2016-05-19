@@ -89,16 +89,6 @@ reset:
 	str	r0, [r4, r5]
 	str	r0, [r4, r6]
 
-	@ dump log message
-	adr	r0, str_aarch64
-	bl	printascii
-	ldr	r0, =LLOADER_BL1_BIN
-	bl	printhex8
-	mov	r0, #'!'
-	bl	printch
-	mov	r0, #'\n'
-	bl	printch
-
 	@ execute warm reset to switch aarch64
 	mov	r2, #3
 	mcr	p15, 0, r2, c12, c0, 2
