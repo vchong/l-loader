@@ -9,7 +9,7 @@ import string
 
 class generator(object):
     block_size = 512
-    bl2u_lba = 192  # 96KB
+    ns_bl1u_lba = 192  # 96KB
 
     # set in self.add()
     idx = 0
@@ -50,14 +50,14 @@ class generator(object):
             if (self.idx == 0):
                 if (lba != 0):
                     print 'bl1.bin doesn\'t start from 0KB offset'
-                left_bytes = self.bl2u_lba * self.block_size - self.p_file
-                print 'blocks: ', blocks, 'size: ', self.bl2u_lba * self.block_size, ' p_file: ', self.p_file, 'left_bytes: ', left_bytes
+                left_bytes = self.ns_bl1u_lba * self.block_size - self.p_file
+                print 'blocks: ', blocks, 'size: ', self.ns_bl1u_lba * self.block_size, ' p_file: ', self.p_file, 'left_bytes: ', left_bytes
                 if (left_bytes < 0):
                     print 'bl1.bin exceeds the 96KB limitation'
                     sys.exit(4)
             elif (self.idx == 1):
-                if (lba != self.bl2u_lba):
-                    print 'bl2u.bin doesn\'t start from 96KB offset'
+                if (lba != self.ns_bl1u_lba):
+                    print 'ns_bl1u.bin doesn\'t start from 96KB offset'
                     sys.exit(4)
             else:
                 print 'wrong index is inputed'
@@ -80,48 +80,48 @@ class generator(object):
     def end(self):
         self.fp.close()
 
-    def create(self, img_bl1, img_bl2u, output_img):
+    def create(self, img_bl1, img_ns_bl1u, output_img):
         print '+-----------------------------------------------------------+'
         print ' Input Images:'
         print '     bl1:                          ', img_bl1
-        print '     bl2u:                         ', img_bl2u
+        print '     ns_bl1u:                         ', img_ns_bl1u
         print ' Ouput Image:                      ', output_img
         print '+-----------------------------------------------------------+\n'
 
         # bl1.bin starts from 0KB
         self.add(0, img_bl1)
-        # bl2u.bin starts from 96KB
-        self.add(self.bl2u_lba, img_bl2u)
+        # ns_bl1u.bin starts from 96KB
+        self.add(self.ns_bl1u_lba, img_ns_bl1u)
 
 def main(argv):
     img_bl1 = 0
-    img_bl2u = 0
+    img_ns_bl1u = 0
     output_img = 0
     try:
-        opts, args = getopt.getopt(argv,"ho:",["img_bl1=","img_bl2u="])
+        opts, args = getopt.getopt(argv,"ho:",["img_bl1=","img_ns_bl1u="])
     except getopt.GetoptError:
-        print 'gen_loader.py -o <l-loader.bin> --img_bl1 <bl1.bin> --img_bl2u <bl2u.bin>'
+        print 'gen_loader.py -o <l-loader.bin> --img_bl1 <bl1.bin> --img_ns_bl1u <ns_bl1u.bin>'
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print 'gen_loader.py -o <l-loader.bin> --img_bl1 <bl1.bin> --img_bl2u <bl2u.bin>'
+            print 'gen_loader.py -o <l-loader.bin> --img_bl1 <bl1.bin> --img_ns_bl1u <ns_bl1u.bin>'
             sys.exit(1)
         elif opt == '-o':
             output_img = arg
         elif opt in ("--img_bl1"):
             img_bl1 = arg
-        elif opt in ("--img_bl2u"):
-            img_bl2u = arg
+        elif opt in ("--img_ns_bl1u"):
+            img_ns_bl1u = arg
 
-    if (img_bl1 == 0) or (img_bl2u == 0) or (output_img == 0):
+    if (img_bl1 == 0) or (img_ns_bl1u == 0) or (output_img == 0):
         print 'parameters are invalid'
-        print 'gen_loader.py -o <l-loader.bin> --img_bl1 <bl1.bin> --img_bl2u <bl2u.bin>'
+        print 'gen_loader.py -o <l-loader.bin> --img_bl1 <bl1.bin> --img_ns_bl1u <ns_bl1u.bin>'
         sys.exit(2)
 
     loader = generator(output_img)
     loader.idx = 0
 
-    loader.create(img_bl1, img_bl2u, output_img)
+    loader.create(img_bl1, img_ns_bl1u, output_img)
 
     loader.end()
 
