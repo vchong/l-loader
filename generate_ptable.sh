@@ -8,6 +8,9 @@
 PTABLE=${PTABLE:-aosp}
 SECTOR_SIZE=4096
 TEMP_FILE=$(mktemp /tmp/${PTABLE}.XXXXXX)
+# 128 entries at most
+ENTRIES_IN_SECTOR=$(expr ${SECTOR_SIZE} / 128)
+ENTRY_SECTORS=$(expr 128 / ${ENTRIES_IN_SECTOR})
 
 case ${PTABLE} in
   tiny)
@@ -24,8 +27,8 @@ case ${PTABLE} in
     ;;
 esac
 
-BK_PTABLE_LBA=$(expr ${SECTOR_NUMBER} - 33)
-echo ${BK_PTABLE_LBA}
+#BK_PTABLE_LBA=$(expr ${SECTOR_NUMBER} - 33)
+#echo ${BK_PTABLE_LBA}
 
 # get the partition table
 case ${PTABLE} in
@@ -88,7 +91,7 @@ case ${PTABLE} in
 esac
 
 # get the main and the backup parts of the partition table
-dd if=${TEMP_FILE} of=prm_ptable.img bs=${SECTOR_SIZE} count=34
-dd if=${TEMP_FILE} of=sec_ptable.img skip=${BK_PTABLE_LBA} bs=${SECTOR_SIZE} count=33
+dd if=${TEMP_FILE} of=prm_ptable.img bs=512 count=34
+#dd if=${TEMP_FILE} of=sec_ptable.img skip=${BK_PTABLE_LBA} bs=512 count=33
 
 rm -f ${TEMP_FILE}
