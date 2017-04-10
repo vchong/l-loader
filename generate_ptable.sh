@@ -11,9 +11,19 @@ TEMP_FILE=$(mktemp /tmp/${PTABLE}.XXXXXX)
 # 128 entries at most
 ENTRIES_IN_SECTOR=$(expr ${SECTOR_SIZE} / 128)
 ENTRY_SECTORS=$(expr 128 / ${ENTRIES_IN_SECTOR})
-TOOL_PATH=/opt/workspace/source_package/gdisk-1.0.1
-SGDISK=${TOOL_PATH}/sgdisk
+PRIMARY_SECTORS=$(expr ${ENTRY_SECTORS} + 2)
+SECONDARY_SECTORS=$(expr ${ENTRY_SECTORS} + 1)
 ALIGNMENT=128
+
+case ${SECTOR_SIZE} in
+  512)
+    SGDISK=sgdisk
+    ;;
+  4096)
+    TOOL_PATH=/opt/workspace/source_package/gdisk-1.0.1
+    SGDISK=${TOOL_PATH}/sgdisk
+    ;;
+esac
 
 case ${PTABLE} in
   tiny)
@@ -27,6 +37,9 @@ case ${PTABLE} in
     ;;
   aosp-16g|linux-16g)
     SECTOR_NUMBER=4194304
+    ;;
+  aosp-32g|linux-32g)
+    SECTOR_NUMBER=7805952
     ;;
   aosp-64g|linux-64g)
     SECTOR_NUMBER=15616000
@@ -96,6 +109,9 @@ case ${PTABLE} in
 esac
 
 # get the primary partition table
-dd if=${TEMP_FILE} of=prm_ptable.img bs=512 count=34
+dd if=${TEMP_FILE} of=prm_ptable.img bs=${SECTOR_SIZE} count=${PRIMARY_SECTORS}
+
+BK_PTABLE_LBA=$(expr ${SECTOR_NUMBER} - ${SECONDARY_SECTORS})
+dd if=${TEMP_FILE} of=sec_ptable.img skip=${BK_PTABLE_LBA} bs=${SECTOR_SIZE} count=${SECONDARY_SECTORS}
 
 rm -f ${TEMP_FILE}
