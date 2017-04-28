@@ -20,7 +20,8 @@ case ${SECTOR_SIZE} in
     ;;
   4096)
     TOOL_PATH=/opt/workspace/source_package/gdisk-1.0.1
-    SGDISK=${TOOL_PATH}/sgdisk
+    #SGDISK=${TOOL_PATH}/sgdisk
+    SGDISK=./sgdisk
     ;;
 esac
 
