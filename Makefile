@@ -15,12 +15,12 @@ all: l-loader.bin ptable.img
 l-loader.bin: start.o $(BL1)
 	$(LD) -Bstatic -Tl-loader.lds -Ttext 0xf9800800 start.o -o loader
 	$(OBJCOPY) -O binary loader temp
-	python gen_loader_hikey.py -o $@ --img_loader=temp --img_bl1=$(BL1) --img_bl2u=$(BL2U)
+	python gen_loader_hikey.py -o $@ --img_loader=temp --img_bl1=$(BL1)
 	rm -f loader temp
 
 ptable.img:
 	for ptable in $(PTABLE_LST); do \
-		PTABLE=$${ptable} bash -x generate_ptable.sh;\
+		PTABLE=$${ptable} SECTOR_SIZE=512 bash -x generate_ptable.sh;\
 		python gen_loader_hikey.py -o ptable-$${ptable}.img --img_prm_ptable=prm_ptable.img;\
 	done
 
