@@ -107,10 +107,10 @@ case ${PTABLE} in
   aosp-32g|aosp-64g)
     dd if=/dev/zero of=${TEMP_FILE} bs=${SECTOR_SIZE} count=${SECTOR_NUMBER} conv=sparse
     fakeroot sgdisk -U 2CB85345-6A91-4043-8203-723F0D28FBE8 -v ${TEMP_FILE}
-    # Hisilicon creates 2 xloader partitions which are 512KB size. All partitions should be aligned at least 1MB with sgdisk.
-    # So dicard one xloader partition in this tool.
-    #[1: xloader: 1M-2M]
-    fakeroot ${SGDISK} -n 1:0:+1M -t 1:0700 -u 1:697c41e0-7a59-4dfa-a9a6-aa43ac5be684 -c 1:"xloader" ${TEMP_FILE}
+    # Hisilicon creates 2 vrl partitions which are 512KB size. All partitions should be aligned at least 1MB with sgdisk.
+    # So dicard one vrl partition in this tool.
+    #[1: vrl: 1M-2M]
+    fakeroot ${SGDISK} -n 1:0:+1M -t 1:0700 -u 1:697c41e0-7a59-4dfa-a9a6-aa43ac5be684 -c 1:"vrl" ${TEMP_FILE}
     #[2: fastboot: 2M-14M]
     fakeroot ${SGDISK} -n 2:0:+12M -t 2:0700 -u 2:3f5f8c48-4402-4ace-9058-30bfea4fa53f -c 2:"fastboot" ${TEMP_FILE}
     #[3: fip: 14M-26M]
@@ -137,10 +137,10 @@ case ${PTABLE} in
   linux-32g|linux-64g)
     dd if=/dev/zero of=${TEMP_FILE} bs=${SECTOR_SIZE} count=${SECTOR_NUMBER} conv=sparse
     fakeroot sgdisk -U 2CB85345-6A91-4043-8203-723F0D28FBE8 -v ${TEMP_FILE}
-    # Hisilicon creates 2 xloader partitions which are 512KB size. All partitions should be aligned at least 1MB with sgdisk.
-    # So dicard one xloader partition in this tool.
-    #[1: xloader: 1M-2M]
-    fakeroot ${SGDISK} -n 1:0:+1M -t 1:0700 -u 1:697c41e0-7a59-4dfa-a9a6-aa43ac5be684 -c 1:"xloader" ${TEMP_FILE}
+    # Hisilicon creates 2 vrl partitions which are 512KB size. All partitions should be aligned at least 1MB with sgdisk.
+    # So dicard one vrl partition in this tool.
+    #[1: vrl: 1M-2M]
+    fakeroot ${SGDISK} -n 1:0:+1M -t 1:0700 -u 1:697c41e0-7a59-4dfa-a9a6-aa43ac5be684 -c 1:"vrl" ${TEMP_FILE}
     #[2: fastboot: 2M-14M]
     fakeroot ${SGDISK} -n 2:0:+12M -t 2:0700 -u 2:3f5f8c48-4402-4ace-9058-30bfea4fa53f -c 2:"fastboot" ${TEMP_FILE}
     #[3: fip: 14M-26M]
