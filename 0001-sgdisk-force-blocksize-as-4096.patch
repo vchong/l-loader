@@ -1,0 +1,57 @@
+diff -puNr gptfdisk-1.0.1/diskio-unix.cc back-gdisk-1.0.1/diskio-unix.cc
+--- gptfdisk-1.0.1/diskio-unix.cc	2015-10-19 06:35:18.000000000 +0800
++++ back-gdisk-1.0.1/diskio-unix.cc	2017-03-03 16:29:49.867264112 +0800
+@@ -139,6 +139,7 @@ int DiskIO::GetBlockSize(void) {
+    struct dk_minfo minfo;
+ #endif
+ 
++   return 4096;
+    // If disk isn't open, try to open it....
+    if (!isOpen) {
+       OpenForRead();
+@@ -440,7 +441,7 @@ uint64_t DiskIO::DiskSize(int *err) {
+       } // if
+       // Unintuitively, the above returns values in 512-byte blocks, no
+       // matter what the underlying device's block size. Correct for this....
+-      sectors /= (GetBlockSize() / 512);
++      sectors /= (GetBlockSize() / GetBlockSize());
+       platformFound++;
+ #endif
+       if (platformFound != 1)
+@@ -452,10 +453,10 @@ uint64_t DiskIO::DiskSize(int *err) {
+       if ((sectors == 0) || (*err == -1)) {
+          if (fstat64(fd, &st) == 0) {
+             bytes = st.st_size;
+-            if ((bytes % UINT64_C(512)) != 0)
++            if ((bytes % UINT64_C(4096)) != 0)
+                cerr << "Warning: File size is not a multiple of 512 bytes!"
+                     << " Misbehavior is likely!\n\a";
+-            sectors = bytes / UINT64_C(512);
++            sectors = bytes / UINT64_C(4096);
+          } // if
+       } // if
+    } // if (isOpen)
+diff -puNr gptfdisk-1.0.1/gpt.h back-gdisk-1.0.1/gpt.h
+--- gptfdisk-1.0.1/gpt.h	2015-10-19 06:35:18.000000000 +0800
++++ back-gdisk-1.0.1/gpt.h	2017-03-03 16:29:06.602808079 +0800
+@@ -16,7 +16,7 @@
+ #define __GPTSTRUCTS
+ 
+ // Default values for sector alignment
+-#define DEFAULT_ALIGNMENT 2048
++#define DEFAULT_ALIGNMENT 256
+ #define MAX_ALIGNMENT 65536
+ #define MIN_AF_ALIGNMENT 8
+ 
+diff -puNr gptfdisk-1.0.1/support.h back-gdisk-1.0.1/support.h
+--- gptfdisk-1.0.1/support.h	2015-10-19 06:35:18.000000000 +0800
++++ back-gdisk-1.0.1/support.h	2017-03-03 14:02:07.990735214 +0800
+@@ -50,7 +50,7 @@
+ #endif
+ 
+ // Set this as a default
+-#define SECTOR_SIZE UINT32_C(512)
++#define SECTOR_SIZE UINT32_C(4096)
+ 
+ // Signatures for Apple (APM) disks, multiplied by 0x100000000
+ #define APM_SIGNATURE1 UINT64_C(0x00004D5000000000)
