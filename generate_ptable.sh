@@ -17,36 +17,47 @@ SECONDARY_SECTORS=$(expr ${ENTRY_SECTORS} + 1)
 case ${SECTOR_SIZE} in
 512)
 	SGDISK=sgdisk
+	case ${PTABLE} in
+	tiny)
+	SECTOR_NUMBER=81920
 	;;
+	aosp-4g|linux-4g)
+	SECTOR_NUMBER=7471104
+	;;
+	aosp-8g|linux-8g)
+	SECTOR_NUMBER=15269888
+	;;
+	esac
+	;;
+
 4096)
 	TOOL_PATH=/opt/workspace/source_package/gdisk-1.0.1
 	#SGDISK=${TOOL_PATH}/sgdisk
 	SGDISK=./sgdisk
+	case ${PTABLE} in
+	tiny)
+		SECTOR_NUMBER=10240
+		;;
+	aosp-4g|linux-4g)
+		SECTOR_NUMBER=1048576
+		;;
+	aosp-8g|linux-8g)
+		SECTOR_NUMBER=2097152
+		;;
+	aosp-16g|linux-16g)
+		SECTOR_NUMBER=4194304
+		;;
+	aosp-32g|linux-32g)
+		SECTOR_NUMBER=7805952
+		;;
+	aosp-64g|linux-64g)
+		SECTOR_NUMBER=15616000
+		;;
+	esac
 	;;
 *)
 	echo "miss ${SECTOR_SIZE}"
 	exit
-	;;
-esac
-
-case ${PTABLE} in
-tiny)
-	SECTOR_NUMBER=81920
-	;;
-aosp-4g|linux-4g)
-	SECTOR_NUMBER=1048576
-	;;
-aosp-8g|linux-8g)
-	SECTOR_NUMBER=2097152
-	;;
-aosp-16g|linux-16g)
-	SECTOR_NUMBER=4194304
-	;;
-aosp-32g|linux-32g)
-	SECTOR_NUMBER=7805952
-	;;
-aosp-64g|linux-64g)
-	SECTOR_NUMBER=15616000
 	;;
 esac
 
