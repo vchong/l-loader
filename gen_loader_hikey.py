@@ -7,20 +7,24 @@ import binascii
 import struct
 import string
 
+# --------------------------
+# | loader | BL1 | NS BL1U |
+# --------------------------
+
 class generator(object):
     #
     # struct l_loader_head {
     #      unsigned int	first_instr;
     #      unsigned char	magic[16];	@ BOOTMAGICNUMBER!
-    #      unsigned int	l_loader_start;
-    #      unsigned int	l_loader_end;
+    #      unsigned int	l_loader_start;         @ start of loader
+    #      unsigned int	l_loader_end;           @ end of BL1 (without ns_bl1u)
     # };
     file_header = [0, 0, 0, 0, 0, 0, 0]
 
     #
     # struct entry_head {
     #       unsigned char   magic[8];           @ ENTY
-    #       unsigned char   name[8];            @ loader/bl1/bl2u
+    #       unsigned char   name[8];            @ loader/bl1/ns_bl1u
     #       unsigned int    start_lba;
     #       unsigned int    count_lba;
     #       unsigned int    flag;               @ boot partition or not
@@ -36,8 +40,9 @@ class generator(object):
     idx = 0
 
     # file pointer
-    p_entry = 0     # pointer in header
-    p_file = 0      # pointer in file
+    p_entry = 0        # pointer in header
+    p_file = 0         # pointer in file
+    p_loader_end = 0   # pointer in header
 
     def __init__(self, out_img):
         try:
@@ -66,6 +71,8 @@ class generator(object):
                 self.p_entry = 28
             elif (self.idx > 1):
                 # image: ns_bl1u
+                # Record the end of loader & BL1. ns_bl1u won't be loaded by BootROM.
+                self.p_loader_end = self.p_file
                 # ns_bl1u should locates in l-loader.bin bias 2KB too
                 if (self.p_file < (lba * self.block_size - 2048)):
                     self.p_file = lba * self.block_size - 2048
@@ -118,7 +125,7 @@ class generator(object):
         self.fp.seek(20)
         start,end = struct.unpack("ii", self.fp.read(8))
         print "start: ", self.hex2(start), 'end: ', self.hex2(end)
-        end = start + self.p_file
+        end = start + self.p_loader_end
         print "start: ", self.hex2(start), 'end: ', self.hex2(end)
         self.fp.seek(24)
         byte = struct.pack('i', end)
