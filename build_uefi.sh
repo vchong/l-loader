@@ -1,5 +1,6 @@
 #!/bin/sh
 BUILD_OPTION=DEBUG
+CROSS_COMPILE=aarch64-linux-gnu-
 #BUILD_OPTION=RELEASE
 GENERATE_PTABLE=1
 
@@ -36,6 +37,7 @@ fi
 # Setup environment variables that are used in uefi-tools
 #export AARCH64_TOOLCHAIN=GCC49
 export AARCH64_TOOLCHAIN=GCC48
+#export AARCH64_TOOLCHAIN=GCC5
 export UEFI_TOOLS_DIR=${BUILD_PATH}/uefi-tools
 
 EDK2_DIR=${BUILD_PATH}/edk2
@@ -44,18 +46,17 @@ export EDK2_DIR
 
 case "$PLATFORM" in
 "hikey")
+	# Check whether fastboot source code is available in ${BUILD_PATH}
+	if [ ! -d "${BUILD_PATH}/atf-fastboot" ]; then
+		echo "Warning: Can't find fastboot source code to build"
+		exit
+	fi
 	EDK2_OUTPUT_DIR=${EDK2_DIR}/Build/HiKey/${BUILD_OPTION}_${AARCH64_TOOLCHAIN}
-	# Since HiKey and HiKey960 isn't using the same ATF
 	cd ${BUILD_PATH}
-	rm -f arm-trusted-firmware
-	ln -sf /opt/workspace/boot/uefi/upstream/test-atf arm-trusted-firmware
 	;;
 "hikey960")
 	EDK2_OUTPUT_DIR=${EDK2_DIR}/Build/HiKey960/${BUILD_OPTION}_${AARCH64_TOOLCHAIN}
-	# Since HiKey and HiKey960 isn't using the same ATF
 	cd ${BUILD_PATH}
-	rm -f arm-trusted-firmware
-	ln -sf atf960 arm-trusted-firmware
 	;;
 esac
 
@@ -65,10 +66,13 @@ echo $EDK2_OUTPUT_DIR
 # Always clean build EDK2
 rm -f ${BUILD_PATH}/l-loader/l-loader.bin
 rm -fr ${BUILD_PATH}/arm-trusted-firmware/build
+rm -fr ${BUILD_PATH}/atf-fastboot/build
 rm -fr ${EDK2_DIR}/Build/
 rm -f ${EDK2_OUTPUT_DIR}/FV/bl1.bin
 rm -f ${EDK2_OUTPUT_DIR}/FV/fip.bin
 rm -f ${EDK2_OUTPUT_DIR}/FV/BL33_AP_UEFI.fd
+cd ${EDK2_OUTPUT_DIR}/BaseTools
+make clean
 sync
 
 echo "Start to build ${PLATFORM} Bootloader..."
@@ -76,13 +80,36 @@ echo "Start to build ${PLATFORM} Bootloader..."
 case "${BUILD_OPTION}" in
 "DEBUG")
 	echo "Debug build"
+	BUILD_DEBUG=1
 	;;
 "RELEASE")
 	echo "Release build"
+	BUILD_DEBUG=0
 	;;
 * )
 	echo "Invalid build mode"
 	exit
+	;;
+esac
+
+# Build fastboot for HiKey
+case "${PLATFORM}" in
+"hikey")
+	cd ${BUILD_PATH}/atf-fastboot
+	CROSS_COMPILE=${CROSS_COMPILE} make PLAT=${PLATFORM} DEBUG=${BUILD_DEBUG}
+	if [ $? != 0 ]; then
+		echo "Fail to build fastboot ($?)"
+		exit
+	fi
+	# Convert "DEBUG"/"RELEASE" to "debug"/"release"
+	FASTBOOT_BUILD_OPTION=$(echo ${BUILD_OPTION} | tr '[A-Z]' '[a-z]')
+	if [ -f ${BUILD_PATH}/atf-fastboot/build/${PLATFORM}/${FASTBOOT_BUILD_OPTION}/bl1.bin ]; then
+		cd ${BUILD_PATH}/l-loader
+		ln -sf ${BUILD_PATH}/atf-fastboot/build/${PLATFORM}/${FASTBOOT_BUILD_OPTION}/bl1.bin fastboot.bin
+	else
+		echo "ERROR: Can't find fastboot binary"
+		exit
+	fi
 	;;
 esac
 
@@ -108,12 +135,11 @@ case "${PLATFORM}" in
 	arm-linux-gnueabihf-gcc -c -o start.o start.S
 	arm-linux-gnueabihf-ld -Bstatic -Tl-loader.lds -Ttext 0xf9800800 start.o -o loader
 	arm-linux-gnueabihf-objcopy -O binary loader temp
-	python gen_loader_hikey.py -o l-loader.bin --img_loader=temp --img_bl1=bl1.bin
+	python gen_loader_hikey.py -o l-loader.bin --img_loader=temp --img_bl1=bl1.bin --img_ns_bl1u=fastboot.bin
 
 	# Generate partition table
 	if [ $GENERATE_PTABLE ]; then
 		PTABLE=aosp-8g SECTOR_SIZE=512 bash -x generate_ptable.sh
-		python gen_loader_hikey.py -o ptable.img --img_prm_ptable=prm_ptable.img
 	fi
 
 	;;
