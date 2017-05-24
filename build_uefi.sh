@@ -1,7 +1,7 @@
 #!/bin/sh
-BUILD_OPTION=DEBUG
+#BUILD_OPTION=DEBUG
+BUILD_OPTION=RELEASE
 CROSS_COMPILE=aarch64-linux-gnu-
-#BUILD_OPTION=RELEASE
 GENERATE_PTABLE=1
 
 case "$1" in
@@ -36,8 +36,8 @@ fi
 
 # Setup environment variables that are used in uefi-tools
 #export AARCH64_TOOLCHAIN=GCC49
-export AARCH64_TOOLCHAIN=GCC48
-#export AARCH64_TOOLCHAIN=GCC5
+#export AARCH64_TOOLCHAIN=GCC48
+export AARCH64_TOOLCHAIN=GCC5
 export UEFI_TOOLS_DIR=${BUILD_PATH}/uefi-tools
 
 EDK2_DIR=${BUILD_PATH}/edk2
@@ -67,12 +67,12 @@ echo $EDK2_OUTPUT_DIR
 rm -f ${BUILD_PATH}/l-loader/l-loader.bin
 rm -fr ${BUILD_PATH}/arm-trusted-firmware/build
 rm -fr ${BUILD_PATH}/atf-fastboot/build
+cd ${EDK2_DIR}/BaseTools
+make clean
 rm -fr ${EDK2_DIR}/Build/
 rm -f ${EDK2_OUTPUT_DIR}/FV/bl1.bin
 rm -f ${EDK2_OUTPUT_DIR}/FV/fip.bin
 rm -f ${EDK2_OUTPUT_DIR}/FV/BL33_AP_UEFI.fd
-cd ${EDK2_OUTPUT_DIR}/BaseTools
-make clean
 sync
 
 echo "Start to build ${PLATFORM} Bootloader..."
