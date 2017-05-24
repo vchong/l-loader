@@ -8,7 +8,7 @@
 
 PTABLE=${PTABLE:-aosp}
 SECTOR_SIZE=${SECTOR_SIZE:-512}
-SGDISK=${SECTOR_SIZE:-sgdisk}
+SGDISK=${SGDISK:-sgdisk}
 TEMP_FILE=$(mktemp /tmp/${PTABLE}.XXXXXX)
 # 128 entries at most
 ENTRIES_IN_SECTOR=$(expr ${SECTOR_SIZE} / 128)
