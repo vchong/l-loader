@@ -150,9 +150,10 @@ case "${PLATFORM}" in
 	else
 		python gen_loader_hikey960.py -o l-loader.bin --img_bl1=bl1.bin
 	fi
-	# Generate partition table
+	# Generate partition table with a patched sgdisk to force
+	# default alignment (2048) and sector size (4096)
 	if [ $GENERATE_PTABLE ]; then
-		PTABLE=aosp-32g SECTOR_SIZE=4096 bash -x generate_ptable.sh
+		PTABLE=aosp-32g SECTOR_SIZE=4096 SGDISK=./sgdisk bash -x generate_ptable.sh
 	fi
 	;;
 esac

@@ -7,6 +7,8 @@
 # linux: (same as aosp without userdata).
 
 PTABLE=${PTABLE:-aosp}
+SECTOR_SIZE=${SECTOR_SIZE:-512}
+SGDISK=${SECTOR_SIZE:-sgdisk}
 TEMP_FILE=$(mktemp /tmp/${PTABLE}.XXXXXX)
 # 128 entries at most
 ENTRIES_IN_SECTOR=$(expr ${SECTOR_SIZE} / 128)
@@ -16,7 +18,6 @@ SECONDARY_SECTORS=$(expr ${ENTRY_SECTORS} + 1)
 
 case ${SECTOR_SIZE} in
 512)
-	SGDISK=sgdisk
 	case ${PTABLE} in
 	tiny)
 	SECTOR_NUMBER=81920
@@ -31,9 +32,9 @@ case ${SECTOR_SIZE} in
 	;;
 
 4096)
-	TOOL_PATH=/opt/workspace/source_package/gdisk-1.0.1
-	#SGDISK=${TOOL_PATH}/sgdisk
-	SGDISK=./sgdisk
+	# FIXME: a patched sgdisk is required to force
+	# default alignment (2048) and sector size (4096)
+	# Override the sgdisk command as needed.
 	case ${PTABLE} in
 	tiny)
 		SECTOR_NUMBER=10240
@@ -55,10 +56,6 @@ case ${SECTOR_SIZE} in
 		;;
 	esac
 	;;
-*)
-	echo "miss ${SECTOR_SIZE}"
-	exit
-	;;
 esac
 
 # get the partition table
@@ -71,53 +68,53 @@ case ${PTABLE} in
     ;;
   aosp-4g|aosp-8g)
     dd if=/dev/zero of=${TEMP_FILE} bs=${SECTOR_SIZE} count=${SECTOR_NUMBER}
-    sgdisk -U 2CB85345-6A91-4043-8203-723F0D28FBE8 -v ${TEMP_FILE}
+    fakeroot ${SGDISK} -U 2CB85345-6A91-4043-8203-723F0D28FBE8 -v ${TEMP_FILE}
     #[1: vrl: 1M-2M]
-    sgdisk -n 1:0:+1M -t 1:0700 -u 1:496847AB-56A1-4CD5-A1AD-47F4ACF055C9 -c 1:"vrl" ${TEMP_FILE}
+    fakeroot ${SGDISK} -n 1:0:+1M -t 1:0700 -u 1:496847AB-56A1-4CD5-A1AD-47F4ACF055C9 -c 1:"vrl" ${TEMP_FILE}
     #[2: vrl_backup: 2M-3M]
-    sgdisk -n 2:0:+1M -t 2:0700 -u 2:61A36FC1-8EFB-4899-84D8-B61642EFA723 -c 2:"vrl_backup" ${TEMP_FILE}
+    fakeroot ${SGDISK} -n 2:0:+1M -t 2:0700 -u 2:61A36FC1-8EFB-4899-84D8-B61642EFA723 -c 2:"vrl_backup" ${TEMP_FILE}
     #[3: mcuimage: 3M-4M]
-    sgdisk -n 3:0:+1M -t 3:0700 -u 3:65007411-962D-4781-9B2C-51DD7DF22CC3 -c 3:"mcuimage" ${TEMP_FILE}
+    fakeroot ${SGDISK} -n 3:0:+1M -t 3:0700 -u 3:65007411-962D-4781-9B2C-51DD7DF22CC3 -c 3:"mcuimage" ${TEMP_FILE}
     #[4: fastboot: 4M-12M]
-    sgdisk -n 4:0:+8M -t 4:EF02 -u 4:496847AB-56A1-4CD5-A1AD-47F4ACF055C9 -c 4:"fastboot" ${TEMP_FILE}
+    fakeroot ${SGDISK} -n 4:0:+8M -t 4:EF02 -u 4:496847AB-56A1-4CD5-A1AD-47F4ACF055C9 -c 4:"fastboot" ${TEMP_FILE}
     #[5: nvme: 12M-14M]
-    sgdisk -n 5:0:+2M -t 5:0700 -u 5:00354BCD-BBCB-4CB3-B5AE-CDEFCB5DAC43 -c 5:"nvme" ${TEMP_FILE}
+    fakeroot ${SGDISK} -n 5:0:+2M -t 5:0700 -u 5:00354BCD-BBCB-4CB3-B5AE-CDEFCB5DAC43 -c 5:"nvme" ${TEMP_FILE}
     #[6: boot: 14M-78M]
-    sgdisk -n 6:0:+64M -t 6:EF00 -u 6:5C0F213C-17E1-4149-88C8-8B50FB4EC70E -c 6:"boot" ${TEMP_FILE}
+    fakeroot ${SGDISK} -n 6:0:+64M -t 6:EF00 -u 6:5C0F213C-17E1-4149-88C8-8B50FB4EC70E -c 6:"boot" ${TEMP_FILE}
     #[7: reserved: 78M-334M]
-    sgdisk -n 7:0:+256M -t 7:0700 -u 7:BED8EBDC-298E-4A7A-B1F1-2500D98453B7 -c 7:"reserved" ${TEMP_FILE}
+    fakeroot ${SGDISK} -n 7:0:+256M -t 7:0700 -u 7:BED8EBDC-298E-4A7A-B1F1-2500D98453B7 -c 7:"reserved" ${TEMP_FILE}
     #[8: cache: 334M-590M]
-    sgdisk -n 8:0:+256M -t 8:8301 -u 8:A092C620-D178-4CA7-B540-C4E26BD6D2E2 -c 8:"cache" ${TEMP_FILE}
+    fakeroot ${SGDISK} -n 8:0:+256M -t 8:8301 -u 8:A092C620-D178-4CA7-B540-C4E26BD6D2E2 -c 8:"cache" ${TEMP_FILE}
     #[9: system: 590M-2126M]
-    sgdisk -n 9:0:+1536M -t 9:8300 -u 9:FC56E345-2E8E-49AE-B2F8-5B9D263FE377 -c 9:"system" ${TEMP_FILE}
+    fakeroot ${SGDISK} -n 9:0:+1536M -t 9:8300 -u 9:FC56E345-2E8E-49AE-B2F8-5B9D263FE377 -c 9:"system" ${TEMP_FILE}
     #[10: userdata: 2126M-End]
-    sgdisk -n -E -t 10:8300 -u 10:064111F6-463B-4CE1-876B-13F3684CE164 -c 10:"userdata" -p ${TEMP_FILE}
+    fakeroot ${SGDISK} -n -E -t 10:8300 -u 10:064111F6-463B-4CE1-876B-13F3684CE164 -c 10:"userdata" -p ${TEMP_FILE}
     ;;
   linux-4g|linux-8g)
     dd if=/dev/zero of=${TEMP_FILE} bs=${SECTOR_SIZE} count=${SECTOR_NUMBER}
-    sgdisk -U 2CB85345-6A91-4043-8203-723F0D28FBE8 -v ${TEMP_FILE}
+    fakeroot ${SGDISK} -U 2CB85345-6A91-4043-8203-723F0D28FBE8 -v ${TEMP_FILE}
     #[1: vrl: 1M-2M]
-    sgdisk -n 1:0:+1M -t 1:0700 -u 1:496847AB-56A1-4CD5-A1AD-47F4ACF055C9 -c 1:"vrl" ${TEMP_FILE}
+    fakeroot ${SGDISK} -n 1:0:+1M -t 1:0700 -u 1:496847AB-56A1-4CD5-A1AD-47F4ACF055C9 -c 1:"vrl" ${TEMP_FILE}
     #[2: vrl_backup: 2M-3M]
-    sgdisk -n 2:0:+1M -t 2:0700 -u 2:61A36FC1-8EFB-4899-84D8-B61642EFA723 -c 2:"vrl_backup" ${TEMP_FILE}
+    fakeroot ${SGDISK} -n 2:0:+1M -t 2:0700 -u 2:61A36FC1-8EFB-4899-84D8-B61642EFA723 -c 2:"vrl_backup" ${TEMP_FILE}
     #[3: mcuimage: 3M-4M]
-    sgdisk -n 3:0:+1M -t 3:0700 -u 3:65007411-962D-4781-9B2C-51DD7DF22CC3 -c 3:"mcuimage" ${TEMP_FILE}
+    fakeroot ${SGDISK} -n 3:0:+1M -t 3:0700 -u 3:65007411-962D-4781-9B2C-51DD7DF22CC3 -c 3:"mcuimage" ${TEMP_FILE}
     #[4: fastboot: 4M-12M]
-    sgdisk -n 4:0:+8M -t 4:EF02 -u 4:496847AB-56A1-4CD5-A1AD-47F4ACF055C9 -c 4:"fastboot" ${TEMP_FILE}
+    fakeroot ${SGDISK} -n 4:0:+8M -t 4:EF02 -u 4:496847AB-56A1-4CD5-A1AD-47F4ACF055C9 -c 4:"fastboot" ${TEMP_FILE}
     #[5: nvme: 12M-14M]
-    sgdisk -n 5:0:+2M -t 5:0700 -u 5:00354BCD-BBCB-4CB3-B5AE-CDEFCB5DAC43 -c 5:"nvme" ${TEMP_FILE}
+    fakeroot ${SGDISK} -n 5:0:+2M -t 5:0700 -u 5:00354BCD-BBCB-4CB3-B5AE-CDEFCB5DAC43 -c 5:"nvme" ${TEMP_FILE}
     #[6: boot: 14M-78M]
-    sgdisk -n 6:0:+64M -t 6:EF00 -u 6:5C0F213C-17E1-4149-88C8-8B50FB4EC70E -c 6:"boot" ${TEMP_FILE}
+    fakeroot ${SGDISK} -n 6:0:+64M -t 6:EF00 -u 6:5C0F213C-17E1-4149-88C8-8B50FB4EC70E -c 6:"boot" ${TEMP_FILE}
     #[7: reserved: 78M-334M]
-    sgdisk -n 7:0:+256M -t 7:0700 -u 7:BED8EBDC-298E-4A7A-B1F1-2500D98453B7 -c 7:"reserved" ${TEMP_FILE}
+    fakeroot ${SGDISK} -n 7:0:+256M -t 7:0700 -u 7:BED8EBDC-298E-4A7A-B1F1-2500D98453B7 -c 7:"reserved" ${TEMP_FILE}
     #[8: cache: 334M-590M]
-    sgdisk -n 8:0:+256M -t 8:8301 -u 8:A092C620-D178-4CA7-B540-C4E26BD6D2E2 -c 8:"cache" ${TEMP_FILE}
+    fakeroot ${SGDISK} -n 8:0:+256M -t 8:8301 -u 8:A092C620-D178-4CA7-B540-C4E26BD6D2E2 -c 8:"cache" ${TEMP_FILE}
     #[9: system: 590M-End]
-    sgdisk -n -E -t 9:8300 -u 9:FC56E345-2E8E-49AE-B2F8-5B9D263FE377 -c 9:"system" ${TEMP_FILE}
+    fakeroot ${SGDISK} -n -E -t 9:8300 -u 9:FC56E345-2E8E-49AE-B2F8-5B9D263FE377 -c 9:"system" ${TEMP_FILE}
     ;;
   aosp-32g|aosp-64g)
     dd if=/dev/zero of=${TEMP_FILE} bs=${SECTOR_SIZE} count=${SECTOR_NUMBER} conv=sparse
-    fakeroot sgdisk -U 2CB85345-6A91-4043-8203-723F0D28FBE8 -v ${TEMP_FILE}
+    fakeroot ${SGDISK} -U 2CB85345-6A91-4043-8203-723F0D28FBE8 -v ${TEMP_FILE}
     # Hisilicon creates 2 vrl partitions which are 512KB size. All partitions should be aligned at least 1MB with sgdisk.
     # So dicard one vrl partition in this tool.
     #[1: vrl: 1M-2M]
