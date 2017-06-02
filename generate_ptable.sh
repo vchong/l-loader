@@ -139,8 +139,8 @@ case ${PTABLE} in
     fakeroot ${SGDISK} -n 11:0:+784M -t 11:0700 -u 11:919d7080-d71a-4ae1-9227-e4585210c837 -c 11:"vendor" ${TEMP_FILE}
     #[12: reserved: 5843M-5844M]
     fakeroot ${SGDISK} -n 12:0:+1M -t 12:0700 -u 12:611eac6b-bc42-4d72-90ac-418569c8e9b8 -c 12:"reserved" ${TEMP_FILE}
-    #[13: userdata: 5844M-9940M]
-    fakeroot ${SGDISK} -n 13:0:+4096M -t 13:8300 -u 13:049b9a32-a36a-483e-ab6f-9ef6644e6d47 -c 13:"userdata" ${TEMP_FILE}
+    #[13: userdata: 5844M-End]
+    fakeroot ${SGDISK} -n -E -t 13:8300 -u 13:049b9a32-a36a-483e-ab6f-9ef6644e6d47 -c 13:"userdata" ${TEMP_FILE}
     ;;
   linux-32g|linux-64g)
     dd if=/dev/zero of=${TEMP_FILE} bs=${SECTOR_SIZE} count=${SECTOR_NUMBER} conv=sparse
