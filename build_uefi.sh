@@ -1,6 +1,6 @@
 #!/bin/sh
-#BUILD_OPTION=DEBUG
-BUILD_OPTION=RELEASE
+BUILD_OPTION=DEBUG
+#BUILD_OPTION=RELEASE
 SELECT_GCC=LINARO_GCC_7_1    # Prefer to use Linaro GCC 7.1.1. Otherwise, user may meet some toolchain issues.
 #GENERATE_PTABLE=1
 
@@ -63,7 +63,7 @@ case "$1" in
 	;;
 "")
 	# If $1 is empty, set ${PLATFORM} as hikey960 by default.
-	PLATFORM=hikey960
+	PLATFORM=hikey
 	;;
 *)
 	echo "Not supported platform:$1"
@@ -162,8 +162,8 @@ esac
 
 # Build UEFI & ARM Trusted Firmware
 cd ${EDK2_DIR}
-#${UEFI_TOOLS_DIR}/uefi-build.sh -b $BUILD_OPTION -a ../arm-trusted-firmware -s ../optee_os $PLATFORM
-${UEFI_TOOLS_DIR}/uefi-build.sh -b $BUILD_OPTION -a ../arm-trusted-firmware $PLATFORM
+${UEFI_TOOLS_DIR}/uefi-build.sh -b $BUILD_OPTION -a ../arm-trusted-firmware -s ../optee_os -v $PLATFORM
+#${UEFI_TOOLS_DIR}/uefi-build.sh -b $BUILD_OPTION -a ../arm-trusted-firmware $PLATFORM
 if [ $? != 0 ]; then
 	echo "Fail to build UEFI & ARM Trusted Firmware ($?)"
 	exit
@@ -184,7 +184,8 @@ case "${PLATFORM}" in
 
 	# Generate partition table
 	if [ $GENERATE_PTABLE ]; then
-		PTABLE=aosp-8g SECTOR_SIZE=512 bash -x generate_ptable.sh
+		#PTABLE=aosp-8g SECTOR_SIZE=512 bash -x generate_ptable.sh
+		PTABLE=linux-8g SECTOR_SIZE=512 bash -x generate_ptable.sh
 	fi
 
 	;;
