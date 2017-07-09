@@ -63,7 +63,7 @@ case "$1" in
 	;;
 "")
 	# If $1 is empty, set ${PLATFORM} as hikey960 by default.
-	PLATFORM=hikey
+	PLATFORM=hikey960
 	;;
 *)
 	echo "Not supported platform:$1"
@@ -111,16 +111,16 @@ esac
 echo $EDK2_OUTPUT_DIR
 
 # Always clean build EDK2
-rm -f ${BUILD_PATH}/l-loader/l-loader.bin
-rm -fr ${BUILD_PATH}/arm-trusted-firmware/build
-rm -fr ${BUILD_PATH}/atf-fastboot/build
-cd ${EDK2_DIR}/BaseTools
-make clean
-rm -fr ${EDK2_DIR}/Build/
-rm -f ${EDK2_OUTPUT_DIR}/FV/bl1.bin
-rm -f ${EDK2_OUTPUT_DIR}/FV/fip.bin
-rm -f ${EDK2_OUTPUT_DIR}/FV/BL33_AP_UEFI.fd
-sync
+#rm -f ${BUILD_PATH}/l-loader/l-loader.bin
+#rm -fr ${BUILD_PATH}/arm-trusted-firmware/build
+#rm -fr ${BUILD_PATH}/atf-fastboot/build
+#cd ${EDK2_DIR}/BaseTools
+#make clean
+#rm -fr ${EDK2_DIR}/Build/
+#rm -f ${EDK2_OUTPUT_DIR}/FV/bl1.bin
+#rm -f ${EDK2_OUTPUT_DIR}/FV/fip.bin
+#rm -f ${EDK2_OUTPUT_DIR}/FV/BL33_AP_UEFI.fd
+#sync
 
 echo "Start to build ${PLATFORM} Bootloader..."
 
