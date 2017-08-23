@@ -5,6 +5,7 @@
 # tiny: for testing purpose.
 # aosp: (same as linux with userdata).
 # linux: (same as aosp without userdata).
+# swap: (similar to asop, drop reserved, 1.5G of swap)
 
 PTABLE=${PTABLE:-aosp}
 SECTOR_SIZE=${SECTOR_SIZE:-512}
@@ -25,7 +26,7 @@ case ${SECTOR_SIZE} in
 	aosp-4g|linux-4g)
 	SECTOR_NUMBER=7471104
 	;;
-	aosp-8g|linux-8g)
+	aosp-8g|linux-8g|swap-8g)
 	SECTOR_NUMBER=15269888
 	;;
 	esac
@@ -67,7 +68,7 @@ case ${PTABLE} in
     fakeroot ${SGDISK} -n 2:4096:6143 -t 2:0700 -u 2:F9F21F02-A8D4-5F04-9746-594869AEC3E4 -c 2:"vrl_backup" -p ${TEMP_FILE}
     ;;
   aosp-4g|aosp-8g)
-    dd if=/dev/zero of=${TEMP_FILE} bs=${SECTOR_SIZE} count=${SECTOR_NUMBER}
+    dd if=/dev/zero of=${TEMP_FILE} bs=${SECTOR_SIZE} count=${SECTOR_NUMBER} conv=sparse
     fakeroot ${SGDISK} -U 2CB85345-6A91-4043-8203-723F0D28FBE8 -v ${TEMP_FILE}
     #[1: vrl: 1M-2M]
     fakeroot ${SGDISK} -n 1:0:+1M -t 1:0700 -u 1:496847AB-56A1-4CD5-A1AD-47F4ACF055C9 -c 1:"vrl" ${TEMP_FILE}
@@ -91,7 +92,7 @@ case ${PTABLE} in
     fakeroot ${SGDISK} -n -E -t 10:8300 -u 10:064111F6-463B-4CE1-876B-13F3684CE164 -c 10:"userdata" -p ${TEMP_FILE}
     ;;
   linux-4g|linux-8g)
-    dd if=/dev/zero of=${TEMP_FILE} bs=${SECTOR_SIZE} count=${SECTOR_NUMBER}
+    dd if=/dev/zero of=${TEMP_FILE} bs=${SECTOR_SIZE} count=${SECTOR_NUMBER} conv=sparse
     fakeroot ${SGDISK} -U 2CB85345-6A91-4043-8203-723F0D28FBE8 -v ${TEMP_FILE}
     #[1: vrl: 1M-2M]
     fakeroot ${SGDISK} -n 1:0:+1M -t 1:0700 -u 1:496847AB-56A1-4CD5-A1AD-47F4ACF055C9 -c 1:"vrl" ${TEMP_FILE}
@@ -111,6 +112,30 @@ case ${PTABLE} in
     fakeroot ${SGDISK} -n 8:0:+256M -t 8:8301 -u 8:A092C620-D178-4CA7-B540-C4E26BD6D2E2 -c 8:"cache" ${TEMP_FILE}
     #[9: system: 590M-End]
     fakeroot ${SGDISK} -n -E -t 9:8300 -u 9:FC56E345-2E8E-49AE-B2F8-5B9D263FE377 -c 9:"system" ${TEMP_FILE}
+    ;;
+  swap-8g)
+    dd if=/dev/zero of=${TEMP_FILE} bs=${SECTOR_SIZE} count=${SECTOR_NUMBER} conv=sparse
+    fakeroot ${SGDISK} -U 2CB85345-6A91-4043-8203-723F0D28FBE8 -v ${TEMP_FILE}
+    #[1: vrl: 1M-2M]
+    fakeroot ${SGDISK} -n 1:0:+1M -t 1:0700 -u 1:496847AB-56A1-4CD5-A1AD-47F4ACF055C9 -c 1:"vrl" ${TEMP_FILE}
+    #[2: vrl_backup: 2M-3M]
+    fakeroot ${SGDISK} -n 2:0:+1M -t 2:0700 -u 2:61A36FC1-8EFB-4899-84D8-B61642EFA723 -c 2:"vrl_backup" ${TEMP_FILE}
+    #[3: mcuimage: 3M-4M]
+    fakeroot ${SGDISK} -n 3:0:+1M -t 3:0700 -u 3:65007411-962D-4781-9B2C-51DD7DF22CC3 -c 3:"mcuimage" ${TEMP_FILE}
+    #[4: fastboot: 4M-12M]
+    fakeroot ${SGDISK} -n 4:0:+8M -t 4:EF02 -u 4:496847AB-56A1-4CD5-A1AD-47F4ACF055C9 -c 4:"fastboot" ${TEMP_FILE}
+    #[5: nvme: 12M-14M]
+    fakeroot ${SGDISK} -n 5:0:+2M -t 5:0700 -u 5:00354BCD-BBCB-4CB3-B5AE-CDEFCB5DAC43 -c 5:"nvme" ${TEMP_FILE}
+    #[6: boot: 14M-78M]
+    fakeroot ${SGDISK} -n 6:0:+64M -t 6:EF00 -u 6:5C0F213C-17E1-4149-88C8-8B50FB4EC70E -c 6:"boot" ${TEMP_FILE}
+    #[7: cache: 78M-384M]
+    fakeroot ${SGDISK} -n 7:0:+256M -t 7:8301 -u 7:A092C620-D178-4CA7-B540-C4E26BD6D2E2 -c 7:"cache" ${TEMP_FILE}
+    #[8: swap: 384M-1920M]
+    fakeroot ${SGDISK} -n 8:0:+1536M -t 8:8200 -u 8:FC56E344-2E8E-49AE-B2F8-5B9D263FE377 -c 8:"swap" ${TEMP_FILE}
+    #[9: system: 1920M-3556M]
+    fakeroot ${SGDISK} -n 9:0:+1536M -t 9:8300 -u 9:FC56E345-2E8E-49AE-B2F8-5B9D263FE377 -c 9:"system" ${TEMP_FILE}
+    #[10: userdata: 3556M-End]
+    fakeroot ${SGDISK} -n -E -t 10:8300 -u 10:064111F6-463B-4CE1-876B-13F3684CE164 -c 10:"userdata" -p ${TEMP_FILE}
     ;;
   aosp-32g|aosp-64g)
     dd if=/dev/zero of=${TEMP_FILE} bs=${SECTOR_SIZE} count=${SECTOR_NUMBER} conv=sparse
