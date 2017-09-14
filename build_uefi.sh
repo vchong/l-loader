@@ -10,10 +10,10 @@ then
 	exec bash "$0" "$@"
 fi
 
-#BUILD_OPTION=DEBUG
-BUILD_OPTION=RELEASE
-AARCH64_GCC=LINARO_GCC_7_2    # Prefer to use Linaro GCC >= 7.1.1. Otherwise, user may meet some toolchain issues.
-CLANG=CLANG_5_0               # Prefer to use CLANG >= 3.9. Since LLVMgold.so is missing in CLANG 3.8.
+BUILD_OPTION=DEBUG
+#BUILD_OPTION=RELEASE
+AARCH64_GCC=LINARO_GCC_6_2     # Prefer to use Linaro GCC >= 7.1.1. Otherwise, user may meet some toolchain issues.
+#CLANG=CLANG_5_0               # Prefer to use CLANG >= 3.9. Since LLVMgold.so is missing in CLANG 3.8.
 #GENERATE_PTABLE=1
 #EDK2_PLATFORM=1
 OPTEE=1
@@ -21,16 +21,24 @@ OPTEE=1
 #USE_UEFI_TOOLS=1
 
 # l-loader on hikey and optee need AARCH32_GCC
-AARCH32_GCC=/opt/toolchain/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin/
+#AARCH32_GCC=/opt/toolchain/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin/
+#AARCH32_GCC=/home/victor.chong/work/swg/aosp/pie960/optee/aarch32/bin
+AARCH32_GCC=/home/victor.chong/work/swg/build/ref/toolchains/aarch32/bin
 PATH=${AARCH32_GCC}:${PATH} && export PATH
 
 # Setup environment variables that are used in uefi-tools
 case "${AARCH64_GCC}" in
-"ARNDROID_GCC_4_9")
+"ANDROID_GCC_4_9")
 	AARCH64_GCC_4_9=/opt/toolchain/aarch64-linux-android-4.9.git/bin/
 	PATH=${AARCH64_GCC_4_9}:${PATH} && export PATH
 	export AARCH64_TOOLCHAIN=GCC49
 	CROSS_COMPILE=aarch64-linux-android-
+	;;
+"LINARO_GCC_6_2")
+	AARCH64_GCC_6_2=/home/victor.chong/work/swg/build/ref/toolchains/aarch64/bin
+	PATH=${AARCH64_GCC_6_2}:${PATH} && export PATH
+	export AARCH64_TOOLCHAIN=GCC5
+	CROSS_COMPILE=aarch64-linux-gnu-
 	;;
 "LINARO_GCC_7_1")
 	AARCH64_GCC_7_1=/opt/toolchain/gcc-linaro-7.1.1-2017.08-x86_64_aarch64-linux-gnu/bin/
@@ -41,6 +49,12 @@ case "${AARCH64_GCC}" in
 "LINARO_GCC_7_2")
 	AARCH64_GCC_7_2=/opt/toolchain/gcc-linaro-7.2.1-2017.11-x86_64_aarch64-linux-gnu/bin/
 	PATH=${AARCH64_GCC_7_2}:${PATH} && export PATH
+	export AARCH64_TOOLCHAIN=GCC5
+	CROSS_COMPILE=aarch64-linux-gnu-
+	;;
+"LINARO_GCC_8")
+	AARCH64_GCC_8=/home/victor.chong/work/swg/aosp/pie960/optee/aarch64/bin
+	PATH=${AARCH64_GCC_8}:${PATH} && export PATH
 	export AARCH64_TOOLCHAIN=GCC5
 	CROSS_COMPILE=aarch64-linux-gnu-
 	;;
@@ -169,6 +183,8 @@ case "${BUILD_OPTION}" in
 "DEBUG")
 	echo "Debug build"
 	BUILD_DEBUG=1
+	#simulate uefi-build.sh
+	#BUILD_DEBUG=0
 	;;
 "RELEASE")
 	echo "Release build"
@@ -212,6 +228,10 @@ function do_symlink()
 		ln -sf ../arm-trusted-firmware/build/${PLATFORM}/$(echo ${BUILD_OPTION,,})/bl1.bin
 		ln -sf ../arm-trusted-firmware/build/${PLATFORM}/$(echo ${BUILD_OPTION,,})/bl2.bin
 		ln -sf ../arm-trusted-firmware/build/${PLATFORM}/$(echo ${BUILD_OPTION,,})/fip.bin
+		#simulate uefi-build.sh
+		#ln -sf ../arm-trusted-firmware/build/${PLATFORM}/release/bl1.bin
+		#ln -sf ../arm-trusted-firmware/build/${PLATFORM}/release/bl2.bin
+		#ln -sf ../arm-trusted-firmware/build/${PLATFORM}/release/fip.bin
 	fi
 	if [ -f ${EDK2_OUTPUT_DIR}/FV/BL33_AP_UEFI.fd ]; then
 		ln -sf ${EDK2_OUTPUT_DIR}/FV/BL33_AP_UEFI.fd
