@@ -17,7 +17,7 @@ DTB=hi3660-hikey960.dtb
 
 ARCH=arm
 BOOT=arch/arm/boot
-#ANDROID_TOOLCHAIN=1
+ANDROID_TOOLCHAIN=1
 
 case "$DTB" in
 "hi6220_cs_udp_ddr3_config.dtb")
@@ -60,11 +60,11 @@ case "$DTB" in
 	if [ ! -d $OUT ]; then
 		echo "can't find out_v8, so create it"
 		mkdir -p $OUT
-		make defconfig O=$OUT 
+		make defconfig O=$OUT
 	fi
 	;;
 "hi3660-hikey960.dtb")
-	DIR=/opt/workspace/boot/uefi/hikey960/l-loader
+	DIR=$(ANDROID_BUILD_TOP)/out/target/product/hikey960
 	BOOT=arch/arm64/boot
 	export ARCH=arm64
 	if [ $ANDROID_TOOLCHAIN ]; then
@@ -78,7 +78,7 @@ case "$DTB" in
 		echo "can't find out_v8, so create it"
 		mkdir -p $OUT
 		make hikey960_defconfig O=$OUT
-		#make defconfig O=$OUT 
+		#make defconfig O=$OUT
 	fi
 	;;
 "hip04-d01.dtb" )
@@ -212,21 +212,24 @@ case "$DTB" in
 	;;
 "hi3660-hikey960.dtb")
 	if [ -f $OUT/$BOOT/Image ]; then
-		UTILS=./utils
-		TOOLS=/media/hzhuang1/5a02a996-5c6e-46f2-9509-ba495026e0e8/workspace/hikey960/tools-images-hikey960
+		#UTILS=./utils
+		TOOLS=${ANDROID_BUILD_TOP}/device/linaro/tools-images-hikey960
 		#ramdisk shell
 		#RAMDISK=$UTILS/ramdisk_64.img
 		#android ramdisk
 		#RAMDISK=$UTILS/ramdisk.img
-		RAMDISK=/opt/workspace/96/960/aosp_49/hikey960-linaro-2017.02.28/flatten_image/initrd.img
+		RAMDISK=${DIR}/ramdisk.img
 		cat $OUT/$BOOT/Image $OUT/$BOOT/dts/hisilicon/$DTB > $OUT/$BOOT/Image-dtb
+		cp $OUT/$BOOT/Image-dtb $DIR/
 		abootimg --create $OUT/$BOOT/boot.img -k $OUT/$BOOT/Image-dtb -r $RAMDISK -f bootimg-960.cfg
-		cp $OUT/$BOOT/boot.img $DIR/boot.img
+		cp $OUT/$BOOT/boot.img $DIR/boot_external_build.img
+		cp $OUT/$BOOT/boot.img ${ANDROID_BUILD_TOP}/device/linaro/hikey/installer/hikey960/boot_external_build.img
 		if [ -f $TOOLS/dtbTool ]; then
 			rm $OUT/$BOOT/dts/hisilicon/hi6220-hikey.dtb
 			rm $OUT/$BOOT/dts/hisilicon/hip05-d02.dtb
 			$TOOLS/dtbTool -o dt.img -s 2048 -p $OUT/scripts/dtc/ -v $OUT/$BOOT/dts/hisilicon/
-			cp dt.img $DIR/dt.img
+			cp dt.img $DIR/dt_external_build.img
+			cp dt.img ${ANDROID_BUILD_TOP}/device/linaro/hikey/installer/hikey960/dt_external_build.img
 		fi
 	fi
 	;;
@@ -263,7 +266,9 @@ case "$DTB" in
 	fi
 	;;
 * )
-	cp $OUT/$BOOT/zImage $DIR/
-	cat $OUT/$BOOT/zImage $OUT/$BOOT/dts/${DTB} > $DIR/zImage_dtb
+	echo "can't find any board"
+	exit
+	#cp $OUT/$BOOT/zImage $DIR/
+	#cat $OUT/$BOOT/zImage $OUT/$BOOT/dts/${DTB} > $DIR/zImage_dtb
 	;;
 esac
