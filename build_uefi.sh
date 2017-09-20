@@ -1,4 +1,5 @@
 #!/bin/sh
+
 BUILD_OPTION=DEBUG
 #BUILD_OPTION=RELEASE
 SELECT_GCC=LINARO_GCC_7_1    # Prefer to use Linaro GCC 7.1.1. Otherwise, user may meet some toolchain issues.
@@ -111,15 +112,15 @@ esac
 echo $EDK2_OUTPUT_DIR
 
 # Always clean build EDK2
-#rm -f ${BUILD_PATH}/l-loader/l-loader.bin
-#rm -fr ${BUILD_PATH}/arm-trusted-firmware/build
-#rm -fr ${BUILD_PATH}/atf-fastboot/build
-#cd ${EDK2_DIR}/BaseTools
-#make clean
-#rm -fr ${EDK2_DIR}/Build/
-#rm -f ${EDK2_OUTPUT_DIR}/FV/bl1.bin
-#rm -f ${EDK2_OUTPUT_DIR}/FV/fip.bin
-#rm -f ${EDK2_OUTPUT_DIR}/FV/BL33_AP_UEFI.fd
+rm -f ${BUILD_PATH}/l-loader/l-loader.bin
+rm -fr ${BUILD_PATH}/arm-trusted-firmware/build
+rm -fr ${BUILD_PATH}/atf-fastboot/build
+cd ${EDK2_DIR}/BaseTools
+make clean
+rm -fr ${EDK2_DIR}/Build/
+rm -f ${EDK2_OUTPUT_DIR}/FV/bl1.bin
+rm -f ${EDK2_OUTPUT_DIR}/FV/fip.bin
+rm -f ${EDK2_OUTPUT_DIR}/FV/BL33_AP_UEFI.fd
 #sync
 
 echo "Start to build ${PLATFORM} Bootloader..."
@@ -196,7 +197,8 @@ case "${PLATFORM}" in
 	# Generate partition table with a patched sgdisk to force
 	# default alignment (2048) and sector size (4096)
 	if [ $GENERATE_PTABLE ]; then
-		PTABLE=aosp-32g SECTOR_SIZE=4096 SGDISK=./sgdisk bash -x generate_ptable.sh
+		#PTABLE=aosp-32g SECTOR_SIZE=4096 SGDISK=./sgdisk bash -x generate_ptable.sh
+		PTABLE=linux-32g SECTOR_SIZE=4096 SGDISK=./sgdisk bash -x generate_ptable.sh
 	fi
 	;;
 esac
