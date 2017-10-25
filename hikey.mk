@@ -22,7 +22,7 @@ l-loader.bin: start.o $(BL1) $(NS_BL1U)
 prm_ptable.img:
 	for ptable in $(PTABLE_LST); do \
 		PTABLE=$${ptable} SECTOR_SIZE=512 bash -x generate_ptable.sh;\
-		mv prm_ptable.img ptable-$${ptable}.img;\
+		cp prm_ptable.img ptable-$${ptable}.img;\
 	done
 
 .PHONY: clean
