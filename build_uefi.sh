@@ -132,10 +132,7 @@ fi
 case "${PLATFORM}" in
 "hikey")
 	# Patch ARM64 mode by l-loader
-	arm-linux-gnueabihf-gcc -c -o start.o start.S
-	arm-linux-gnueabihf-ld -Bstatic -Tl-loader.lds -Ttext 0xf9800800 start.o -o loader
-	arm-linux-gnueabihf-objcopy -O binary loader temp
-	python gen_loader_hikey.py -o l-loader.bin --img_loader=temp --img_bl1=bl1.bin --img_ns_bl1u=fastboot.bin
+	make -f ${PLATFORM}.mk l-loader.bin
 
 	# Generate partition table
 	if [ $GENERATE_PTABLE ]; then
@@ -145,11 +142,8 @@ case "${PLATFORM}" in
 	;;
 "hikey960")
 	# Pack bl1.bin and BL33 together
-	if [ -f ${EDK2_OUTPUT_DIR}/FV/BL33_AP_UEFI.fd ]; then
-		python gen_loader_hikey960.py -o l-loader.bin --img_bl1=bl1.bin --img_ns_bl1u=BL33_AP_UEFI.fd
-	else
-		python gen_loader_hikey960.py -o l-loader.bin --img_bl1=bl1.bin
-	fi
+	make -f ${PLATFORM}.mk l-loader.bin
+
 	# Generate partition table with a patched sgdisk to force
 	# default alignment (2048) and sector size (4096)
 	if [ $GENERATE_PTABLE ]; then
