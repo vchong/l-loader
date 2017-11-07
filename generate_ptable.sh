@@ -17,47 +17,26 @@ ENTRY_SECTORS=$(expr 128 / ${ENTRIES_IN_SECTOR})
 PRIMARY_SECTORS=$(expr ${ENTRY_SECTORS} + 2)
 SECONDARY_SECTORS=$(expr ${ENTRY_SECTORS} + 1)
 
-case ${SECTOR_SIZE} in
-512)
-	case ${PTABLE} in
-	tiny)
-	SECTOR_NUMBER=81920
-	;;
-	aosp-4g|linux-4g)
-	SECTOR_NUMBER=7471104
-	;;
-	aosp-8g|linux-8g|swap-8g)
-	SECTOR_NUMBER=15269888
-	;;
-	esac
-	;;
-
-4096)
-	# FIXME: a patched sgdisk is required to force
-	# default alignment (2048) and sector size (4096)
-	# Override the sgdisk command as needed.
-	case ${PTABLE} in
-	tiny)
-		SECTOR_NUMBER=10240
-		;;
-	aosp-4g|linux-4g)
-		SECTOR_NUMBER=1048576
-		;;
-	aosp-8g|linux-8g)
-		SECTOR_NUMBER=2097152
-		;;
-	aosp-16g|linux-16g)
-		SECTOR_NUMBER=4194304
-		;;
-	aosp-32g|linux-32g)
-		SECTOR_NUMBER=7805952
-		;;
-	aosp-64g|linux-64g)
-		SECTOR_NUMBER=15616000
-		;;
-	esac
-	;;
+case ${PTABLE} in
+  tiny)
+    SECTOR_NUMBER=81920
+    ;;
+  aosp-4g|linux-4g)
+    SECTOR_NUMBER=7471104
+    ;;
+  aosp-8g|linux-8g|swap-8g)
+    SECTOR_NUMBER=15269888
+    ;;
+  aosp-32g*|linux-32g)
+    SECTOR_NUMBER=62447650    # count with 512-byte block size
+    ;;
+  aosp-64g|linux-64g)
+    SECTOR_NUMBER=124895300   # count with 512-byte block size
+    ;;
 esac
+
+SECTOR_ALIGNMENT=$(expr ${SECTOR_SIZE} / 512)
+SECTOR_NUMBER=$(expr '(' ${SECTOR_NUMBER} '*' 512 + ${SECTOR_SIZE} - 1 ')' / ${SECTOR_SIZE})
 
 # get the partition table
 case ${PTABLE} in
@@ -137,11 +116,11 @@ case ${PTABLE} in
     #[10: userdata: 3556M-End]
     fakeroot ${SGDISK} -n -E -t 10:8300 -u 10:064111F6-463B-4CE1-876B-13F3684CE164 -c 10:"userdata" -p ${TEMP_FILE}
     ;;
-  aosp-32g|aosp-64g)
+  aosp-32g*|aosp-64g)
     dd if=/dev/zero of=${TEMP_FILE} bs=${SECTOR_SIZE} count=${SECTOR_NUMBER} conv=sparse
     fakeroot ${SGDISK} -U 2CB85345-6A91-4043-8203-723F0D28FBE8 -v ${TEMP_FILE}
-    #[1: vrl: 1M-2M]
-    fakeroot ${SGDISK} -n 1:0:+1M -t 1:0700 -u 1:697c41e0-7a59-4dfa-a9a6-aa43ac5be684 -c 1:"vrl" ${TEMP_FILE}
+    #[1: xloader_reserved1: 1M-2M]
+    fakeroot ${SGDISK} -n 1:0:+1M -t 1:0700 -u 1:697c41e0-7a59-4dfa-a9a6-aa43ac5be684 -c 1:"xloader_reserved1" ${TEMP_FILE}
     #[2: fastboot: 2M-14M]
     fakeroot ${SGDISK} -n 2:0:+12M -t 2:0700 -u 2:3f5f8c48-4402-4ace-9058-30bfea4fa53f -c 2:"fastboot" ${TEMP_FILE}
     #[3: nvme: 14M-20M]
@@ -164,12 +143,22 @@ case ${PTABLE} in
     fakeroot ${SGDISK} -n 11:0:+784M -t 11:0700 -u 11:919d7080-d71a-4ae1-9227-e4585210c837 -c 11:"vendor" ${TEMP_FILE}
     #[12: reserved: 5843M-5844M]
     fakeroot ${SGDISK} -n 12:0:+1M -t 12:0700 -u 12:611eac6b-bc42-4d72-90ac-418569c8e9b8 -c 12:"reserved" ${TEMP_FILE}
-    #[13: userdata: 5844M-End]
-    fakeroot ${SGDISK} -n -E -t 13:8300 -u 13:049b9a32-a36a-483e-ab6f-9ef6644e6d47 -c 13:"userdata" ${TEMP_FILE}
+    case ${PTABLE} in
+      aosp-32g)
+        #[13: userdata: 5844M-End]
+        fakeroot ${SGDISK} -n -E -t 13:8300 -u 13:fea80d9c-f3e3-45d9-aed0-1d06e4abd77f -c 13:"userdata" ${TEMP_FILE}
+        ;;
+      aosp-32g-spare)
+        #[13: userdata: 5844M-9844M]
+        fakeroot ${SGDISK} -n 13:0:+1000M -t 13:8300 -u 13:fea80d9c-f3e3-45d9-aed0-1d06e4abd77f -c 13:"userdata" ${TEMP_FILE}
+        #[14: swap: 9844M-End]
+        fakeroot ${SGDISK} -n -E -t 14:8300 -u 14:9501eade-20fb-4bc7-83d3-62c1be3ed92d -c 14:"swap" ${TEMP_FILE}
+        ;;
+    esac
     ;;
   linux-32g|linux-64g)
     dd if=/dev/zero of=${TEMP_FILE} bs=${SECTOR_SIZE} count=${SECTOR_NUMBER} conv=sparse
-    fakeroot sgdisk -U 2CB85345-6A91-4043-8203-723F0D28FBE8 -v ${TEMP_FILE}
+    fakeroot ${SGDISK} -U 2CB85345-6A91-4043-8203-723F0D28FBE8 -v ${TEMP_FILE}
     #[1: vrl: 1M-2M]
     fakeroot ${SGDISK} -n 1:0:+1M -t 1:0700 -u 1:697c41e0-7a59-4dfa-a9a6-aa43ac5be684 -c 1:"vrl" ${TEMP_FILE}
     #[2: fastboot: 2M-14M]
