@@ -77,6 +77,15 @@ class generator(object):
     def hex2(self, data):
         return data > 0 and hex(data) or hex(data & 0xffffffff)
 
+    def pad(self, align_bytes):
+        unalign_bytes = self.p_file % align_bytes
+        if (unalign_bytes > 0):
+            count = align_bytes - unalign_bytes
+            for i in range (0, count):
+                zero = struct.pack('x')
+                self.fp.write(zero)
+            self.p_file += count
+
     def end(self):
         self.fp.close()
 
@@ -92,6 +101,8 @@ class generator(object):
         self.add(0, img_bl1)
         # ns_bl1u.bin starts from 96KB
         self.add(self.ns_bl1u_lba, img_ns_bl1u)
+        # padding to 128KB
+        self.pad(128 * 1024)
 
 def main(argv):
     img_bl1 = 0
