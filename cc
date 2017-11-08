@@ -64,7 +64,8 @@ case "$DTB" in
 	fi
 	;;
 "hi3660-hikey960.dtb")
-	DIR=$(ANDROID_BUILD_TOP)/out/target/product/hikey960
+	DIR=${ANDROID_BUILD_TOP}/out/target/product/hikey960
+	echo "DIR=$DIR"
 	BOOT=arch/arm64/boot
 	export ARCH=arm64
 	if [ $ANDROID_TOOLCHAIN ]; then
@@ -221,7 +222,7 @@ case "$DTB" in
 		RAMDISK=${DIR}/ramdisk.img
 		cat $OUT/$BOOT/Image $OUT/$BOOT/dts/hisilicon/$DTB > $OUT/$BOOT/Image-dtb
 		cp $OUT/$BOOT/Image-dtb $DIR/
-		abootimg --create $OUT/$BOOT/boot.img -k $OUT/$BOOT/Image-dtb -r $RAMDISK -f bootimg-960.cfg
+		abootimg --create $OUT/$BOOT/boot.img -k $OUT/$BOOT/Image-dtb -r $RAMDISK -f ${ANDROID_BUILD_TOP}/device/linaro/l-loader/bootimg-960.cfg
 		cp $OUT/$BOOT/boot.img $DIR/boot_external_build.img
 		cp $OUT/$BOOT/boot.img ${ANDROID_BUILD_TOP}/device/linaro/hikey/installer/hikey960/boot_external_build.img
 		if [ -f $TOOLS/dtbTool ]; then
