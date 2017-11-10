@@ -1,8 +1,58 @@
 #!/bin/sh
 #BUILD_OPTION=DEBUG
 BUILD_OPTION=RELEASE
-CROSS_COMPILE=aarch64-linux-gnu-
-GENERATE_PTABLE=1
+SELECT_GCC=LINARO_GCC_7_1    # Prefer to use Linaro GCC 7.1.1. Otherwise, user may meet some toolchain issues.
+#GENERATE_PTABLE=1
+
+# Setup environment variables that are used in uefi-tools
+case "${SELECT_GCC}" in
+"ARNDROID_GCC_4_9")
+	AARCH64_GCC_4_9=/opt/toolchain/aarch64-linux-android-4.9.git/bin/
+	PATH=${AARCH64_GCC_4_9}:${PATH} && export PATH
+	export AARCH64_TOOLCHAIN=GCC49
+	CROSS_COMPILE=aarch64-linux-android-
+	;;
+"LINARO_GCC_4_8")
+	AARCH64_GCC_4_8=/opt/toolchain/gcc-linaro-aarch64-linux-gnu-4.8-2014.04_linux/bin/
+	PATH=${AARCH64_GCC_4_8}:${PATH} && export PATH
+	export AARCH64_TOOLCHAIN=GCC48
+	CROSS_COMPILE=aarch64-linux-gnu-
+	;;
+"LINARO_GCC_4_9")
+	AARCH64_GCC_4_9=/opt/toolchain/gcc-linaro-4.9-2014.11-x86_64_aarch64-linux-gnu/bin/
+	PATH=${AARCH64_GCC_4_9}:${PATH} && export PATH
+	export AARCH64_TOOLCHAIN=GCC49
+	CROSS_COMPILE=aarch64-linux-gnu-
+	;;
+"LINARO_GCC_5_3")
+	AARCH64_GCC_5_3=/opt/toolchain/gcc-linaro-5.3.1-2016.05-x86_64_aarch64-linux-gnu/bin/
+	PATH=${AARCH64_GCC_5_3}:${PATH} && export PATH
+	export AARCH64_TOOLCHAIN=GCC5
+	CROSS_COMPILE=aarch64-linux-gnu-
+	;;
+"LINARO_GCC_5_4")
+	AARCH64_GCC_5_4=/opt/toolchain/gcc-linaro-5.4.1-2017.05-i686_aarch64-linux-gnu/bin/
+	PATH=${AARCH64_GCC_5_4}:${PATH} && export PATH
+	export AARCH64_TOOLCHAIN=GCC5
+	CROSS_COMPILE=aarch64-linux-gnu-
+	;;
+"LINARO_GCC_6_4")
+	AARCH64_GCC_6_4=/opt/toolchain/gcc-linaro-6.4.1-2017.08-x86_64_aarch64-linux-gnu/bin/
+	PATH=${AARCH64_GCC_6_4}:${PATH} && export PATH
+	export AARCH64_TOOLCHAIN=GCC5
+	CROSS_COMPILE=aarch64-linux-gnu-
+	;;
+"LINARO_GCC_7_1")
+	AARCH64_GCC_7_1=/opt/toolchain/gcc-linaro-7.1.1-2017.08-x86_64_aarch64-linux-gnu/bin/
+	PATH=${AARCH64_GCC_7_1}:${PATH} && export PATH
+	export AARCH64_TOOLCHAIN=GCC5
+	CROSS_COMPILE=aarch64-linux-gnu-
+	;;
+*)
+	echo "Not supported toolchain:${SELECT_GCC}"
+	exit
+	;;
+esac
 
 case "$1" in
 "hikey")
@@ -35,9 +85,6 @@ else
 fi
 
 # Setup environment variables that are used in uefi-tools
-#export AARCH64_TOOLCHAIN=GCC49
-#export AARCH64_TOOLCHAIN=GCC48
-export AARCH64_TOOLCHAIN=GCC5
 export UEFI_TOOLS_DIR=${BUILD_PATH}/uefi-tools
 
 EDK2_DIR=${BUILD_PATH}/edk2
@@ -115,6 +162,7 @@ esac
 
 # Build UEFI & ARM Trusted Firmware
 cd ${EDK2_DIR}
+#${UEFI_TOOLS_DIR}/uefi-build.sh -b $BUILD_OPTION -a ../arm-trusted-firmware -s ../optee_os $PLATFORM
 ${UEFI_TOOLS_DIR}/uefi-build.sh -b $BUILD_OPTION -a ../arm-trusted-firmware $PLATFORM
 if [ $? != 0 ]; then
 	echo "Fail to build UEFI & ARM Trusted Firmware ($?)"
