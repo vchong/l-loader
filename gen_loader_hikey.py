@@ -42,7 +42,6 @@ class generator(object):
     # file pointer
     p_entry = 0        # pointer in header
     p_file = 0         # pointer in file
-    p_loader_end = 0   # pointer in header
 
     def __init__(self, out_img):
         try:
@@ -71,8 +70,6 @@ class generator(object):
                 self.p_entry = 28
             elif (self.idx > 1):
                 # image: ns_bl1u
-                # Record the end of loader & BL1. ns_bl1u won't be loaded by BootROM.
-                self.p_loader_end = self.p_file
                 # ns_bl1u should locates in l-loader.bin bias 2KB too
                 if (self.p_file < (lba * self.block_size - 2048)):
                     self.p_file = lba * self.block_size - 2048
@@ -125,7 +122,7 @@ class generator(object):
         self.fp.seek(20)
         start,end = struct.unpack("ii", self.fp.read(8))
         print "start: ", self.hex2(start), 'end: ', self.hex2(end)
-        end = start + self.p_loader_end
+        end = start + self.p_file
         print "start: ", self.hex2(start), 'end: ', self.hex2(end)
         self.fp.seek(24)
         byte = struct.pack('i', end)
