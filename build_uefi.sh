@@ -174,6 +174,7 @@ fi
 # Locate output files of UEFI & Arm Trust Firmware
 cd ${BUILD_PATH}/l-loader
 ln -sf ${EDK2_OUTPUT_DIR}/FV/bl1.bin
+ln -sf ${EDK2_OUTPUT_DIR}/FV/bl2.bin
 ln -sf ${EDK2_OUTPUT_DIR}/FV/fip.bin
 if [ -f ${EDK2_OUTPUT_DIR}/FV/BL33_AP_UEFI.fd ]; then
 	ln -sf ${EDK2_OUTPUT_DIR}/FV/BL33_AP_UEFI.fd
@@ -181,8 +182,10 @@ fi
 
 case "${PLATFORM}" in
 "hikey")
-	# Patch ARM64 mode by l-loader
 	PATH=${AARCH32_GCC}:${PATH} && export PATH
+	# Patch aarch64 mode on bl1.bin. Then bind it with fastboot.
+	make -f ${PLATFORM}.mk recovery.bin
+	# Patch aarch64 mode on bl2.bin
 	make -f ${PLATFORM}.mk l-loader.bin
 
 	# Generate partition table
@@ -192,7 +195,9 @@ case "${PLATFORM}" in
 
 	;;
 "hikey960")
-	# Pack bl1.bin and BL33 together
+	# Bind bl1.bin with BL33
+	make -f ${PLATFORM}.mk recovery.bin
+	# Use bl2.bin as l-loader
 	make -f ${PLATFORM}.mk l-loader.bin
 
 	# Generate partition table with a patched sgdisk to force
