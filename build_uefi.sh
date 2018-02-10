@@ -1,11 +1,13 @@
 #!/bin/sh
 #BUILD_OPTION=DEBUG
 BUILD_OPTION=RELEASE
-SELECT_GCC=LINARO_GCC_7_1    # Prefer to use Linaro GCC 7.1.1. Otherwise, user may meet some toolchain issues.
+AARCH64_GCC=LINARO_GCC_7_1    # Prefer to use Linaro GCC 7.1.1. Otherwise, user may meet some toolchain issues.
 #GENERATE_PTABLE=1
 
 # Setup environment variables that are used in uefi-tools
-case "${SELECT_GCC}" in
+AARCH32_GCC=/opt/toolchain/gcc-linaro-arm-linux-gnueabihf-4.8-2014.01_linux/bin/
+
+case "${AARCH64_GCC}" in
 "ARNDROID_GCC_4_9")
 	AARCH64_GCC_4_9=/opt/toolchain/aarch64-linux-android-4.9.git/bin/
 	PATH=${AARCH64_GCC_4_9}:${PATH} && export PATH
@@ -49,7 +51,7 @@ case "${SELECT_GCC}" in
 	CROSS_COMPILE=aarch64-linux-gnu-
 	;;
 *)
-	echo "Not supported toolchain:${SELECT_GCC}"
+	echo "Not supported toolchain:${AARCH64_GCC}"
 	exit
 	;;
 esac
@@ -180,6 +182,7 @@ fi
 case "${PLATFORM}" in
 "hikey")
 	# Patch ARM64 mode by l-loader
+	PATH=${AARCH32_GCC}:${PATH} && export PATH
 	make -f ${PLATFORM}.mk l-loader.bin
 
 	# Generate partition table
