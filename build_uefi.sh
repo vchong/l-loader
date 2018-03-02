@@ -3,12 +3,12 @@
 # Usage: bash build_uefi.sh {platform}
 #
 
-#BUILD_OPTION=DEBUG
-BUILD_OPTION=RELEASE
-#AARCH64_GCC=CLANG_3_9
+BUILD_OPTION=DEBUG
+#BUILD_OPTION=RELEASE
 AARCH64_GCC=LINARO_GCC_7_2    # Prefer to use Linaro GCC >= 7.1.1. Otherwise, user may meet some toolchain issues.
+CLANG=CLANG_5_0               # Prefer to use CLANG >= 3.9. Since LLVMgold.so is missing in CLANG 3.8.
 #GENERATE_PTABLE=1
-#EDK2_PLATFORM=1
+EDK2_PLATFORM=1
 
 # l-loader on hikey and optee need AARCH32_GCC
 AARCH32_GCC=/opt/toolchain/gcc-linaro-arm-linux-gnueabihf-4.8-2014.01_linux/bin/
@@ -21,29 +21,36 @@ case "${AARCH64_GCC}" in
 	PATH=${AARCH64_GCC_4_9}:${PATH} && export PATH
 	export AARCH64_TOOLCHAIN=GCC49
 	CROSS_COMPILE=aarch64-linux-android-
-	TOOLCHAIN_FAMILY=gcc
 	;;
 "LINARO_GCC_7_1")
 	AARCH64_GCC_7_1=/opt/toolchain/gcc-linaro-7.1.1-2017.08-x86_64_aarch64-linux-gnu/bin/
 	PATH=${AARCH64_GCC_7_1}:${PATH} && export PATH
 	export AARCH64_TOOLCHAIN=GCC5
 	CROSS_COMPILE=aarch64-linux-gnu-
-	TOOLCHAIN_FAMILY=gcc
 	;;
 "LINARO_GCC_7_2")
 	AARCH64_GCC_7_2=/opt/toolchain/gcc-linaro-7.2.1-2017.11-x86_64_aarch64-linux-gnu/bin/
 	PATH=${AARCH64_GCC_7_2}:${PATH} && export PATH
 	export AARCH64_TOOLCHAIN=GCC5
 	CROSS_COMPILE=aarch64-linux-gnu-
-	TOOLCHAIN_FAMILY=gcc
-	;;
-"CLANG_3_9")
-	export AARCH64_TOOLCHAIN=CLANG38
-	export CC=/usr/bin/clang
-	TOOLCHAIN_FAMILY=clang
 	;;
 *)
 	echo "Not supported toolchain:${AARCH64_GCC}"
+	exit
+	;;
+esac
+
+case "${CLANG}" in
+"CLANG_3_9")
+	export AARCH64_TOOLCHAIN=CLANG38
+	export CC=/usr/bin/clang
+	;;
+"CLANG_5_0")
+	export AARCH64_TOOLCHAIN=CLANG38
+	export CC=/usr/bin/clang
+	;;
+*)
+	echo "Not supported CLANG:${CLANG}"
 	exit
 	;;
 esac
@@ -145,18 +152,11 @@ esac
 case "${PLATFORM}" in
 "hikey")
 	cd ${BUILD_PATH}/atf-fastboot
-	case "${TOOLCHAIN_FAMILY}" in
-	"gcc")
+	if [ $CLANG ]; then
+		CROSS_COMPILE=aarch64-linux-gnu- PATH=${AARCH64_GCC}:${PATH} make PLAT=${PLATFORM} DEBUG=${BUILD_DEBUG}
+	else
 		CROSS_COMPILE=aarch64-linux-gnu- make PLAT=${PLATFORM} DEBUG=${BUILD_DEBUG}
-		;;
-	"clang")
-		CROSS_COMPILE=aarch64-linux-gnu- PATH=/opt/toolchain/gcc-linaro-7.2.1-2017.11-x86_64_aarch64-linux-gnu/bin/:${PATH} make CC=/usr/bin/clang PLAT=${PLATFORM} DEBUG=${BUILD_DEBUG}
-		;;
-	*)
-		echo "Invalid toolchain family: ${TOOLCHAIN_FAMILY}"
-		exit
-		;;
-	esac
+	fi
 	if [ $? != 0 ]; then
 		echo "Fail to build fastboot ($?)"
 		exit
@@ -191,31 +191,41 @@ function do_symlink()
 	fi
 }
 
+function do_build()
+{
+	# Build edk2
+	${UEFI_TOOLS_DIR}/edk2-build.sh -b $BUILD_OPTION -e ../edk2 -p ../edk2-platforms -n ../edk2-non-osi -T clang $PLATFORM
+	# Build OPTEE
+	cd ${BUILD_PATH}/optee_os
+	CROSS_COMPILE=arm-linux-gnueabihf- CROSS_COMPILE_core=aarch64-linux-gnu- CROSS_COMPILE_ta_arm64=aarch64-linux-gnu- CROSS_COMPILE_ta_arm32=arm-linux-gnueabihf- PATH=${AARCH64_GCC}:${PATH} make PLATFORM=hikey-hikey960 CFG_ARM64_core=y
+	# Build ARM Trusted Firmware
+	cd ${BUILD_PATH}/arm-trusted-firmware
+	case "${PLATFORM}" in
+	"hikey")
+		SCP_BL2=../edk2-non-osi/Platform/Hisilicon/HiKey/mcuimage.bin
+		;;
+	"hikey960")
+		SCP_BL2=../edk2-non-osi/Platform/Hisilicon/HiKey960/lpm3.img
+		;;
+	esac
+	BL32=../optee_os/out/arm-plat-hikey/core/tee-pager.bin
+	BL33=${EDK2_OUTPUT_DIR}/FV/BL33_AP_UEFI.fd
+	#CROSS_COMPILE=aarch64-linux-gnu- PATH=${AARCH64_GCC}:${PATH} make PLAT=$PLATFORM SCP_BL2=$SCP_BL2 SPD=opteed BL32=$BL32 BL33=$BL33 DEBUG=$BUILD_DEBUG all fip
+	CROSS_COMPILE=aarch64-linux-gnu- PATH=${AARCH64_GCC}:${PATH} make PLAT=$PLATFORM SCP_BL2=$SCP_BL2 BL33=$BL33 DEBUG=$BUILD_DEBUG all fip
+}
+
 # Build UEFI & ARM Trusted Firmware
 if [ $EDK2_PLATFORM ]; then
 	# Must not build in edk2 directory. Otherwise, we'll meet build failure.
 	cd ${BUILD_PATH}/l-loader
-	case "${TOOLCHAIN_FAMILY}" in
-	"gcc")
-		${UEFI_TOOLS_DIR}/edk2-build.sh -b $BUILD_OPTION -a ../arm-trusted-firmware -s ../optee_os -e ../edk2 -p ../edk2-platforms -n ../edk2-non-osi -T $TOOLCHAIN_FAMILY $PLATFORM
-		;;
-	"clang")
-		# Build edk2
-		${UEFI_TOOLS_DIR}/edk2-build.sh -b $BUILD_OPTION -e ../edk2 -p ../edk2-platforms -n ../edk2-non-osi -T $TOOLCHAIN_FAMILY $PLATFORM
-		# Build OPTEE
-		# Can't support thumb
-		#cd ${BUILD_PATH}/optee_os
-		#CROSS_COMPILE=arm-linux-gnueabihf- CROSS_COMPILE_core=aarch64-linux-gnu- CROSS_COMPILE_ta_arm64=aarch64-linux-gnu- CROSS_COMPILE_ta_arm32=arm-linux-gnueabihf- PATH=/opt/toolchain/gcc-linaro-7.2.1-2017.11-x86_64_aarch64-linux-gnu/bin/:${PATH} make CC=/usr/bin/clang PLATFORM=hikey-hikey960 CFG_ARM_core=y
-		# Build ARM Trusted Firmware
-		cd ${BUILD_PATH}/arm-trusted-firmware
-		#CROSS_COMPILE=aarch64-linux-gnu- PATH=/opt/toolchain/gcc-linaro-7.2.1-2017.11-x86_64_aarch64-linux-gnu/bin/:${PATH} make CC=/usr/bin/clang PLAT=$PLATFORM SPD=opteed BL32=../optee_os/out/arm-plat-hikey/core/tee-pager.bin BL33=${EDK2_OUTPUT_DIR}/FV/BL33_AP_UEFI.fd DEBUG=$BUILD_DEBUG all
-		CROSS_COMPILE=aarch64-linux-gnu- PATH=/opt/toolchain/gcc-linaro-7.2.1-2017.11-x86_64_aarch64-linux-gnu/bin/:${PATH} make CC=/usr/bin/clang PLAT=$PLATFORM BL33=${EDK2_OUTPUT_DIR}/FV/BL33_AP_UEFI.fd DEBUG=$BUILD_DEBUG all fip
-		;;
-	esac
+	if [ $CLANG ]; then
+		do_build
+	else
+		${UEFI_TOOLS_DIR}/edk2-build.sh -b $BUILD_OPTION -a ../arm-trusted-firmware -s ../optee_os -e ../edk2 -p ../edk2-platforms -n ../edk2-non-osi -T gcc $PLATFORM
+	fi
 else
 	cd ${EDK2_DIR}
-	${UEFI_TOOLS_DIR}/uefi-build.sh -b $BUILD_OPTION -a ../arm-trusted-firmware $PLATFORM
-	#${UEFI_TOOLS_DIR}/uefi-build.sh -b $BUILD_OPTION -a ../arm-trusted-firmware -s ../optee_os $PLATFORM
+	${UEFI_TOOLS_DIR}/uefi-build.sh -b $BUILD_OPTION -a ../arm-trusted-firmware -s ../optee_os $PLATFORM
 fi
 if [ $? != 0 ]; then
 	echo "Fail to build UEFI & ARM Trusted Firmware ($?)"
