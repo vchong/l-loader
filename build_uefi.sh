@@ -11,25 +11,25 @@ CLANG=CLANG_5_0               # Prefer to use CLANG >= 3.9. Since LLVMgold.so is
 EDK2_PLATFORM=1
 
 # l-loader on hikey and optee need AARCH32_GCC
-AARCH32_GCC=/opt/toolchain/gcc-linaro-arm-linux-gnueabihf-4.8-2014.01_linux/bin/
+AARCH32_GCC=/home/victor.chong/work/tcwg/bin/arm-linux-gnueabihf/bin/
 PATH=${AARCH32_GCC}:${PATH} && export PATH
 
 # Setup environment variables that are used in uefi-tools
 case "${AARCH64_GCC}" in
 "ARNDROID_GCC_4_9")
-	AARCH64_GCC_4_9=/opt/toolchain/aarch64-linux-android-4.9.git/bin/
+	AARCH64_GCC_4_9=/home/victor.chong/work/swg/svp/lcr-ref-hikey-o/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/bin/
 	PATH=${AARCH64_GCC_4_9}:${PATH} && export PATH
 	export AARCH64_TOOLCHAIN=GCC49
 	CROSS_COMPILE=aarch64-linux-android-
 	;;
 "LINARO_GCC_7_1")
-	AARCH64_GCC_7_1=/opt/toolchain/gcc-linaro-7.1.1-2017.08-x86_64_aarch64-linux-gnu/bin/
+	AARCH64_GCC_7_1=/home/victor.chong/work/tcwg/bin/gcc-linaro-7.1.1-2017.08-x86_64_aarch64-linux-gnu/bin/
 	PATH=${AARCH64_GCC_7_1}:${PATH} && export PATH
 	export AARCH64_TOOLCHAIN=GCC5
 	CROSS_COMPILE=aarch64-linux-gnu-
 	;;
 "LINARO_GCC_7_2")
-	AARCH64_GCC_7_2=/opt/toolchain/gcc-linaro-7.2.1-2017.11-x86_64_aarch64-linux-gnu/bin/
+	AARCH64_GCC_7_2=/home/victor.chong/work/tcwg/bin/aarch64-linux-gnu/bin/
 	PATH=${AARCH64_GCC_7_2}:${PATH} && export PATH
 	export AARCH64_TOOLCHAIN=GCC5
 	CROSS_COMPILE=aarch64-linux-gnu-
@@ -43,11 +43,12 @@ esac
 case "${CLANG}" in
 "CLANG_3_9")
 	export AARCH64_TOOLCHAIN=CLANG38
+	#on hackbox, this is 3.4 NOT 3.9
 	export CC=/usr/bin/clang
 	;;
 "CLANG_5_0")
 	export AARCH64_TOOLCHAIN=CLANG38
-	export CC=/usr/bin/clang
+	export CC=clang
 	;;
 *)
 	echo "Not supported CLANG:${CLANG}"
@@ -64,7 +65,7 @@ case "$1" in
 	;;
 "")
 	# If $1 is empty, set ${PLATFORM} as hikey960 by default.
-	PLATFORM=hikey960
+	PLATFORM=hikey
 	;;
 *)
 	echo "Not supported platform:$1"
@@ -153,7 +154,7 @@ case "${PLATFORM}" in
 "hikey")
 	cd ${BUILD_PATH}/atf-fastboot
 	if [ $CLANG ]; then
-		CROSS_COMPILE=aarch64-linux-gnu- PATH=${AARCH64_GCC}:${PATH} make PLAT=${PLATFORM} DEBUG=${BUILD_DEBUG}
+		CROSS_COMPILE=aarch64-linux-gnu- PATH=${AARCH64_GCC}:${PATH} make CC=clang PLAT=${PLATFORM} DEBUG=${BUILD_DEBUG}
 	else
 		CROSS_COMPILE=aarch64-linux-gnu- make PLAT=${PLATFORM} DEBUG=${BUILD_DEBUG}
 	fi
@@ -194,10 +195,11 @@ function do_symlink()
 function do_build()
 {
 	# Build edk2
-	${UEFI_TOOLS_DIR}/edk2-build.sh -b $BUILD_OPTION -e ../edk2 -p ../edk2-platforms -n ../edk2-non-osi -T clang $PLATFORM
+	${UEFI_TOOLS_DIR}/uefi-build.sh -b $BUILD_OPTION -b DEBUG -T clang $PLATFORM
 	# Build OPTEE
+	# check PLATFORM is hikey or 960!
 	cd ${BUILD_PATH}/optee_os
-	CROSS_COMPILE=arm-linux-gnueabihf- CROSS_COMPILE_core=aarch64-linux-gnu- CROSS_COMPILE_ta_arm64=aarch64-linux-gnu- CROSS_COMPILE_ta_arm32=arm-linux-gnueabihf- PATH=${AARCH64_GCC}:${PATH} make PLATFORM=hikey-hikey960 CFG_ARM64_core=y
+	CROSS_COMPILE=arm-linux-gnueabihf- CROSS_COMPILE_core=aarch64-linux-gnu- CROSS_COMPILE_ta_arm64=aarch64-linux-gnu- CROSS_COMPILE_ta_arm32=arm-linux-gnueabihf- PATH=${AARCH64_GCC}:${PATH} make CC=clang PLATFORM=hikey-${PLATFORM} CFG_ARM64_core=y
 	# Build ARM Trusted Firmware
 	cd ${BUILD_PATH}/arm-trusted-firmware
 	case "${PLATFORM}" in
@@ -210,8 +212,8 @@ function do_build()
 	esac
 	BL32=../optee_os/out/arm-plat-hikey/core/tee-pager.bin
 	BL33=${EDK2_OUTPUT_DIR}/FV/BL33_AP_UEFI.fd
-	#CROSS_COMPILE=aarch64-linux-gnu- PATH=${AARCH64_GCC}:${PATH} make PLAT=$PLATFORM SCP_BL2=$SCP_BL2 SPD=opteed BL32=$BL32 BL33=$BL33 DEBUG=$BUILD_DEBUG all fip
-	CROSS_COMPILE=aarch64-linux-gnu- PATH=${AARCH64_GCC}:${PATH} make PLAT=$PLATFORM SCP_BL2=$SCP_BL2 BL33=$BL33 DEBUG=$BUILD_DEBUG all fip
+	CROSS_COMPILE=aarch64-linux-gnu- PATH=${AARCH64_GCC}:${PATH} make CC=clang PLAT=$PLATFORM SCP_BL2=$SCP_BL2 SPD=opteed BL32=$BL32 BL33=$BL33 DEBUG=$BUILD_DEBUG all fip
+	#CROSS_COMPILE=aarch64-linux-gnu- PATH=${AARCH64_GCC}:${PATH} make CC=clang PLAT=$PLATFORM SCP_BL2=$SCP_BL2 BL33=$BL33 DEBUG=$BUILD_DEBUG all fip
 }
 
 # Build UEFI & ARM Trusted Firmware
