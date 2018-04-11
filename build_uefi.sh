@@ -1,7 +1,14 @@
-#!/bin/sh
+#!/usr/bin/env bash
+
 #
 # Usage: bash build_uefi.sh {platform}
 #
+
+# Execute bash shell if use other shell
+if [ -z "$BASH_VERSION" ]
+then
+	exec bash "$0" "$@"
+fi
 
 BUILD_OPTION=DEBUG
 #BUILD_OPTION=RELEASE
@@ -172,6 +179,9 @@ function do_symlink()
 
 function do_build()
 {
+	# unset ARCH environment variable to avoid confusion for UEFI building
+	unset ARCH
+
 	# Build edk2
 	cd ${BUILD_PATH}
 	export WORKSPACE=${BUILD_PATH}
