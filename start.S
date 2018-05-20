@@ -58,7 +58,7 @@ reset:
 	ldr	r0, [r4, r5]		@ Load ACPU_SC_CPUx_CTRL
 	orr	r0, r0, #CPU_CTRL_AARCH64_MODE
 	str	r0, [r4, r5]		@ Save to ACPU_SC_CPUx_CTRL
-	ldr	r0, [r4, r5]
+	nop
 
 	add	r5, r5, #0x100		@ Iterate ACPU_SC_CPUx_CTRL
 	cmp	r5, r6
