@@ -16,6 +16,7 @@ AARCH64_GCC=LINARO_GCC_7_2    # Prefer to use Linaro GCC >= 7.1.1. Otherwise, us
 #CLANG=CLANG_5_0               # Prefer to use CLANG >= 3.9. Since LLVMgold.so is missing in CLANG 3.8.
 #GENERATE_PTABLE=1
 #EDK2_PLATFORM=1
+OPTEE=1
 
 # l-loader on hikey and optee need AARCH32_GCC
 AARCH32_GCC=/opt/toolchain/gcc-linaro-arm-linux-gnueabihf-4.8-2014.01_linux/bin/
@@ -222,17 +223,23 @@ function do_build()
 		exit
 	fi
 	# Build OPTEE
-	cd ${BUILD_PATH}/optee_os
-	CROSS_COMPILE=arm-linux-gnueabihf- CROSS_COMPILE_core=aarch64-linux-gnu- CROSS_COMPILE_ta_arm64=aarch64-linux-gnu- CROSS_COMPILE_ta_arm32=arm-linux-gnueabihf- PATH=${AARCH64_GCC}:${PATH} make PLATFORM=hikey-${PLATFORM} CFG_ARM64_core=y
-	if [ $? != 0 ]; then
-		echo "Fail to build OPTEE ($?)"
-		exit
+	if [ $OPTEE ]; then
+		cd ${BUILD_PATH}/optee_os
+		CROSS_COMPILE=arm-linux-gnueabihf- CROSS_COMPILE_core=aarch64-linux-gnu- CROSS_COMPILE_ta_arm64=aarch64-linux-gnu- CROSS_COMPILE_ta_arm32=arm-linux-gnueabihf- PATH=${AARCH64_GCC}:${PATH} make PLATFORM=hikey-${PLATFORM} CFG_ARM64_core=y
+		if [ $? != 0 ]; then
+			echo "Fail to build OPTEE ($?)"
+			exit
+		fi
 	fi
 	# Build ARM Trusted Firmware
 	cd ${BUILD_PATH}/arm-trusted-firmware
-	BL32=../optee_os/out/arm-plat-hikey/core/tee-pager.bin
 	BL33=${EDK2_OUTPUT_DIR}/FV/BL33_AP_UEFI.fd
-	CROSS_COMPILE=aarch64-linux-gnu- make ${TC_FLAGS} PLAT=${PLATFORM} SCP_BL2=${SCP_BL2} SPD=opteed BL32=${BL32} BL33=${BL33} DEBUG=${BUILD_DEBUG} all fip
+	if [ $OPTEE ]; then
+		BL32=../optee_os/out/arm-plat-hikey/core/tee-pager.bin
+		CROSS_COMPILE=aarch64-linux-gnu- make ${TC_FLAGS} PLAT=${PLATFORM} SCP_BL2=${SCP_BL2} SPD=opteed BL32=${BL32} BL33=${BL33} DEBUG=${BUILD_DEBUG} all fip
+	else
+		CROSS_COMPILE=aarch64-linux-gnu- make ${TC_FLAGS} PLAT=${PLATFORM} SCP_BL2=${SCP_BL2} BL33=${BL33} DEBUG=${BUILD_DEBUG} all fip
+	fi
 	if [ $? != 0 ]; then
 		echo "Fail to build ARM Trusted Firmware ($?)"
 		exit
