@@ -235,8 +235,10 @@ function do_build()
 	cd ${BUILD_PATH}/arm-trusted-firmware
 	BL33=${EDK2_OUTPUT_DIR}/FV/BL33_AP_UEFI.fd
 	if [ $OPTEE ]; then
-		BL32=../optee_os/out/arm-plat-hikey/core/tee-pager.bin
-		CROSS_COMPILE=aarch64-linux-gnu- make ${TC_FLAGS} PLAT=${PLATFORM} SCP_BL2=${SCP_BL2} SPD=opteed BL32=${BL32} BL33=${BL33} DEBUG=${BUILD_DEBUG} all fip
+		BL32=../optee_os/out/arm-plat-hikey/core/tee-header_v2.bin
+		BL32_EXTRA1=../optee_os/out/arm-plat-hikey/core/tee-pager_v2.bin
+		BL32_EXTRA2=../optee_os/out/arm-plat-hikey/core/tee-pageable_v2.bin
+		CROSS_COMPILE=aarch64-linux-gnu- make ${TC_FLAGS} PLAT=${PLATFORM} SCP_BL2=${SCP_BL2} SPD=opteed BL32=${BL32} BL32_EXTRA1=${BL32_EXTRA1} BL32_EXTRA2=${BL32_EXTRA2} BL33=${BL33} DEBUG=${BUILD_DEBUG} all fip
 	else
 		CROSS_COMPILE=aarch64-linux-gnu- make ${TC_FLAGS} PLAT=${PLATFORM} SCP_BL2=${SCP_BL2} BL33=${BL33} DEBUG=${BUILD_DEBUG} all fip
 	fi
