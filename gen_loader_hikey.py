@@ -147,8 +147,8 @@ class generator(object):
         # bl1.bin starts from 4KB
         self.add(8, img_bl1)
         if img_ns_bl1u != 0:
-            # ns_bl1u.bin starts from 96KB
-            self.add(192, img_ns_bl1u)
+            # ns_bl1u.bin starts from 160KB
+            self.add(320, img_ns_bl1u)
 
 def main(argv):
     img_ns_bl1u = 0

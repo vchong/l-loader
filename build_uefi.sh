@@ -17,6 +17,7 @@ AARCH64_GCC=LINARO_GCC_7_2    # Prefer to use Linaro GCC >= 7.1.1. Otherwise, us
 #GENERATE_PTABLE=1
 #EDK2_PLATFORM=1
 OPTEE=1
+#TBB=1                         # Trusted Board Boot
 
 # l-loader on hikey and optee need AARCH32_GCC
 AARCH32_GCC=/opt/toolchain/gcc-linaro-arm-linux-gnueabihf-4.8-2014.01_linux/bin/
@@ -87,10 +88,22 @@ esac
 
 if [ -d "${PWD}/edk2" ] && [ -d "${PWD}/arm-trusted-firmware" ] && [ -d "${PWD}/l-loader" ]; then
 	# Check whether source code are available in ${PWD}
+	if [ ${TBB} ]; then
+		if [ ! -d "${PWD}/mbedtls" ]; then
+			echo "Warning: Can't find mbedtls source code to build."
+			exit
+		fi
+	fi
 	BUILD_PATH=${PWD}
 	echo "Find source code in ${PWD}"
 elif [ -d "${PWD}/../edk2" ] && [ -d "${PWD}/../arm-trusted-firmware" ] && [ -d "${PWD}/../l-loader" ]; then
 	# Check whether source code are available in parent of ${PWD}
+	if [ ${TBB} ]; then
+		if [ ! -d "${PWD}/../mbedtls" ]; then
+			echo "Warning: Can't find mbedtls source code to build."
+			exit
+		fi
+	fi
 	BUILD_PATH=$(dirname ${PWD})
 	echo "Find source code in parent directory of ${PWD}"
 else
@@ -238,10 +251,16 @@ function do_build()
 		BL32=../optee_os/out/arm-plat-hikey/core/tee-header_v2.bin
 		BL32_EXTRA1=../optee_os/out/arm-plat-hikey/core/tee-pager_v2.bin
 		BL32_EXTRA2=../optee_os/out/arm-plat-hikey/core/tee-pageable_v2.bin
-		CROSS_COMPILE=aarch64-linux-gnu- make ${TC_FLAGS} PLAT=${PLATFORM} SCP_BL2=${SCP_BL2} SPD=opteed BL32=${BL32} BL32_EXTRA1=${BL32_EXTRA1} BL32_EXTRA2=${BL32_EXTRA2} BL33=${BL33} DEBUG=${BUILD_DEBUG} all fip
+		TEE_ARGS="SPD=opteed BL32=${BL32} BL32_EXTRA1=${BL32_EXTRA1} BL32_EXTRA2=${BL32_EXTRA2}"
 	else
-		CROSS_COMPILE=aarch64-linux-gnu- make ${TC_FLAGS} PLAT=${PLATFORM} SCP_BL2=${SCP_BL2} BL33=${BL33} DEBUG=${BUILD_DEBUG} all fip
+		TEE_ARGS=""
 	fi
+	if [ $TBB ]; then
+		TBB_ARGS="TRUSTED_BOARD_BOOT=1 MBEDTLS_DIR=${BUILD_PATH}/mbedtls GENERATE_COT=1"
+	else
+		TBB_ARGS=""
+	fi
+	CROSS_COMPILE=aarch64-linux-gnu- make ${TC_FLAGS} PLAT=${PLATFORM} SCP_BL2=${SCP_BL2} ${TEE_ARGS} ${TBB_ARGS} BL33=${BL33} DEBUG=${BUILD_DEBUG} all fip
 	if [ $? != 0 ]; then
 		echo "Fail to build ARM Trusted Firmware ($?)"
 		exit
