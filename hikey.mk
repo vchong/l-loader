@@ -1,4 +1,4 @@
-CROSS_COMPILE?=arm-linux-gnueabihf-
+CROSS_COMPILE=arm-linux-gnueabihf-
 
 ifeq ($(notdir $(CC)), clang)
 	CC=clang
@@ -7,6 +7,7 @@ ifeq ($(notdir $(CC)), clang)
 else
 	CC=$(CROSS_COMPILE)gcc
 	LD=$(CROSS_COMPILE)ld
+	CFLAGS=-mcpu=cortex-a53
 endif
 OBJCOPY=$(CROSS_COMPILE)objcopy
 
