@@ -9,7 +9,7 @@ import string
 
 class generator(object):
     block_size = 512
-    ns_bl1u_lba = 192  # 96KB
+    ns_bl1u_lba = 320  # 160KB
 
     # set in self.add()
     idx = 0
@@ -53,11 +53,11 @@ class generator(object):
                 left_bytes = self.ns_bl1u_lba * self.block_size - self.p_file
                 print 'blocks: ', blocks, 'size: ', self.ns_bl1u_lba * self.block_size, ' p_file: ', self.p_file, 'left_bytes: ', left_bytes
                 if (left_bytes < 0):
-                    print 'bl1.bin exceeds the 96KB limitation'
+                    print 'bl1.bin exceeds the 160KB limitation'
                     sys.exit(4)
             elif (self.idx == 1):
                 if (lba != self.ns_bl1u_lba):
-                    print 'ns_bl1u.bin doesn\'t start from 96KB offset'
+                    print 'ns_bl1u.bin doesn\'t start from 160KB offset'
                     sys.exit(4)
             else:
                 print 'wrong index is inputed'
@@ -99,7 +99,7 @@ class generator(object):
 
         # bl1.bin starts from 0KB
         self.add(0, img_bl1)
-        # ns_bl1u.bin starts from 96KB
+        # ns_bl1u.bin starts from 160KB
         self.add(self.ns_bl1u_lba, img_ns_bl1u)
         # padding to 128KB
         self.pad(128 * 1024)
