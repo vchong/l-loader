@@ -10,14 +10,15 @@ then
 	exec bash "$0" "$@"
 fi
 
-BUILD_OPTION=DEBUG
-#BUILD_OPTION=RELEASE
+#BUILD_OPTION=DEBUG
+BUILD_OPTION=RELEASE
 AARCH64_GCC=LINARO_GCC_7_2    # Prefer to use Linaro GCC >= 7.1.1. Otherwise, user may meet some toolchain issues.
-#CLANG=CLANG_5_0               # Prefer to use CLANG >= 3.9. Since LLVMgold.so is missing in CLANG 3.8.
+CLANG=CLANG_5_0               # Prefer to use CLANG >= 3.9. Since LLVMgold.so is missing in CLANG 3.8.
 #GENERATE_PTABLE=1
 #EDK2_PLATFORM=1
 OPTEE=1
 #TBB=1                         # Trusted Board Boot
+#USE_UEFI_TOOLS=1
 
 # l-loader on hikey and optee need AARCH32_GCC
 AARCH32_GCC=/opt/toolchain/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin/
@@ -49,25 +50,27 @@ case "${AARCH64_GCC}" in
 	;;
 esac
 
-case "${CLANG}" in
-"CLANG_3_9")
-	export AARCH64_TOOLCHAIN=CLANG38
-	TC_FLAGS="CC=clang"
-	;;
-"CLANG_5_0")
-	export AARCH64_TOOLCHAIN=CLANG38
-	TC_FLAGS="CC=clang"
-	;;
-"")
-	# CLANG is not used.
-	export GCC5_AARCH64_PREFIX=aarch64-linux-gnu-
-	TC_FLAGS=""
-	;;
-*)
-	echo "Not supported CLANG:${CLANG}"
-	exit
-	;;
-esac
+if [ ! $USE_UEFI_TOOLS ]; then
+	case "${CLANG}" in
+	"CLANG_3_9")
+		export AARCH64_TOOLCHAIN=CLANG38
+		TC_FLAGS="CC=clang"
+		;;
+	"CLANG_5_0")
+		export AARCH64_TOOLCHAIN=CLANG38
+		TC_FLAGS="CC=clang"
+		;;
+	"")
+		# CLANG is not used.
+		export GCC5_AARCH64_PREFIX=aarch64-linux-gnu-
+		TC_FLAGS=""
+		;;
+	*)
+		echo "Not supported CLANG:${CLANG}"
+		exit
+		;;
+	esac
+fi
 
 case "$1" in
 "hikey")
@@ -111,6 +114,9 @@ else
 	exit
 fi
 
+if [ $USE_UEFI_TOOLS ]; then
+	UEFI_TOOLS_DIR=${BUILD_PATH}/uefi-tools
+fi
 EDK2_DIR=${BUILD_PATH}/edk2
 echo "edk2 dir:${EDK2_DIR}"
 export EDK2_DIR
@@ -122,10 +128,18 @@ case "$PLATFORM" in
 		echo "Warning: Can't find fastboot source code to build"
 		exit
 	fi
-	EDK2_OUTPUT_DIR=${BUILD_PATH}/Build/HiKey/${BUILD_OPTION}_${AARCH64_TOOLCHAIN}
+	if [ $UEFI_TOOLS_DIR ]; then
+		EDK2_OUTPUT_DIR=${EDK2_DIR}/Build/HiKey/${BUILD_OPTION}_${AARCH64_TOOLCHAIN}
+	else
+		EDK2_OUTPUT_DIR=${BUILD_PATH}/Build/HiKey/${BUILD_OPTION}_${AARCH64_TOOLCHAIN}
+	fi
 	;;
 "hikey960")
-	EDK2_OUTPUT_DIR=${BUILD_PATH}/Build/HiKey960/${BUILD_OPTION}_${AARCH64_TOOLCHAIN}
+	if [ $UEFI_TOOLS_DIR ]; then
+		EDK2_OUTPUT_DIR=${EDK2_DIR}/Build/HiKey960/${BUILD_OPTION}_${AARCH64_TOOLCHAIN}
+	else
+		EDK2_OUTPUT_DIR=${BUILD_PATH}/Build/HiKey960/${BUILD_OPTION}_${AARCH64_TOOLCHAIN}
+	fi
 	;;
 esac
 
@@ -190,15 +204,21 @@ function do_symlink()
 {
 	# Locate output files of UEFI & Arm Trust Firmware
 	cd ${BUILD_PATH}/l-loader
-	ln -sf ../arm-trusted-firmware/build/${PLATFORM}/$(echo ${BUILD_OPTION,,})/bl1.bin
-	ln -sf ../arm-trusted-firmware/build/${PLATFORM}/$(echo ${BUILD_OPTION,,})/bl2.bin
-	ln -sf ../arm-trusted-firmware/build/${PLATFORM}/$(echo ${BUILD_OPTION,,})/fip.bin
+	if [ $UEFI_TOOLS_DIR ]; then
+		ln -sf ${EDK2_OUTPUT_DIR}/FV/bl1.bin
+		ln -sf ${EDK2_OUTPUT_DIR}/FV/bl2.bin
+		ln -sf ${EDK2_OUTPUT_DIR}/FV/fip.bin
+	else
+		ln -sf ../arm-trusted-firmware/build/${PLATFORM}/$(echo ${BUILD_OPTION,,})/bl1.bin
+		ln -sf ../arm-trusted-firmware/build/${PLATFORM}/$(echo ${BUILD_OPTION,,})/bl2.bin
+		ln -sf ../arm-trusted-firmware/build/${PLATFORM}/$(echo ${BUILD_OPTION,,})/fip.bin
+	fi
 	if [ -f ${EDK2_OUTPUT_DIR}/FV/BL33_AP_UEFI.fd ]; then
 		ln -sf ${EDK2_OUTPUT_DIR}/FV/BL33_AP_UEFI.fd
 	fi
 }
 
-function do_build()
+function do_build_by_self()
 {
 	# unset ARCH environment variable to avoid confusion for UEFI building
 	unset ARCH
@@ -268,6 +288,18 @@ function do_build()
 		TBB_ARGS=""
 	fi
 	CROSS_COMPILE=aarch64-linux-gnu- make ${TC_FLAGS} PLAT=${PLATFORM} SCP_BL2=${SCP_BL2} ${TEE_ARGS} ${TBB_ARGS} BL33=${BL33} DEBUG=${BUILD_DEBUG} all fip
+}
+
+function do_build()
+{
+	if [ $UEFI_TOOLS_DIR ]; then
+		unset ARCH
+		cd ${EDK2_DIR}
+		${UEFI_TOOLS_DIR}/uefi-build.sh -b $BUILD_OPTION -a ../arm-trusted-firmware $PLATFORM
+		#${UEFI_TOOLS_DIR}/uefi-build.sh -b $BUILD_OPTION -a ../arm-trusted-firmware -s ../optee_os $PLATFORM
+	else
+		do_build_by_self
+	fi
 	if [ $? != 0 ]; then
 		echo "Fail to build ARM Trusted Firmware ($?)"
 		exit
