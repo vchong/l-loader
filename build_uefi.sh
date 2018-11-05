@@ -20,7 +20,7 @@ OPTEE=1
 #TBB=1                         # Trusted Board Boot
 
 # l-loader on hikey and optee need AARCH32_GCC
-AARCH32_GCC=/opt/toolchain/gcc-linaro-arm-linux-gnueabihf-4.8-2014.01_linux/bin/
+AARCH32_GCC=/opt/toolchain/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin/
 PATH=${AARCH32_GCC}:${PATH} && export PATH
 
 # Setup environment variables that are used in uefi-tools
