@@ -245,7 +245,7 @@ function do_build()
 	# Build OPTEE
 	if [ $OPTEE ]; then
 		cd ${BUILD_PATH}/optee_os
-		CROSS_COMPILE=arm-linux-gnueabihf- CROSS_COMPILE_core=aarch64-linux-gnu- CROSS_COMPILE_ta_arm64=aarch64-linux-gnu- CROSS_COMPILE_ta_arm32=arm-linux-gnueabihf- PATH=${AARCH64_GCC}:${PATH} make PLATFORM=hikey-${PLATFORM} CFG_ARM64_core=y
+		CROSS_COMPILE=arm-linux-gnueabihf- CROSS_COMPILE_core=aarch64-linux-gnu- CROSS_COMPILE_ta_arm64=aarch64-linux-gnu- CROSS_COMPILE_ta_arm32=arm-linux-gnueabihf- PATH=${AARCH64_GCC}:${PATH} make PLATFORM=hikey-${PLATFORM} CFG_ARM64_core=y DEBUG=${BUILD_DEBUG}
 		if [ $? != 0 ]; then
 			echo "Fail to build OPTEE ($?)"
 			exit
