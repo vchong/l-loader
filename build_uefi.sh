@@ -137,9 +137,16 @@ cd ${EDK2_DIR}/BaseTools
 make clean
 rm -fr ${BUILD_PATH}/Build/
 rm -fr ${EDK2_DIR}/Build/
+rm -f ${EDK2_DIR}/Conf/.cache
+rm -f ${EDK2_DIR}/Conf/build_rule.txt
+rm -f ${EDK2_DIR}/Conf/target.txt
+rm -f ${EDK2_DIR}/Conf/tools_def.txt
 rm -f ${EDK2_OUTPUT_DIR}/FV/bl1.bin
 rm -f ${EDK2_OUTPUT_DIR}/FV/fip.bin
 rm -f ${EDK2_OUTPUT_DIR}/FV/BL33_AP_UEFI.fd
+if [ $OPTEE ]; then
+	rm -fr ${BUILD_PATH}/optee_os/out
+fi
 sync
 
 echo "Start to build ${PLATFORM} Bootloader..."
