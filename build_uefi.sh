@@ -137,9 +137,16 @@ cd ${EDK2_DIR}/BaseTools
 make clean
 rm -fr ${BUILD_PATH}/Build/
 rm -fr ${EDK2_DIR}/Build/
+rm -f ${EDK2_DIR}/Conf/.cache
+rm -f ${EDK2_DIR}/Conf/build_rule.txt
+rm -f ${EDK2_DIR}/Conf/target.txt
+rm -f ${EDK2_DIR}/Conf/tools_def.txt
 rm -f ${EDK2_OUTPUT_DIR}/FV/bl1.bin
 rm -f ${EDK2_OUTPUT_DIR}/FV/fip.bin
 rm -f ${EDK2_OUTPUT_DIR}/FV/BL33_AP_UEFI.fd
+if [ $OPTEE ]; then
+	rm -fr ${BUILD_PATH}/optee_os/out
+fi
 sync
 
 echo "Start to build ${PLATFORM} Bootloader..."
@@ -238,7 +245,7 @@ function do_build()
 	# Build OPTEE
 	if [ $OPTEE ]; then
 		cd ${BUILD_PATH}/optee_os
-		CROSS_COMPILE=arm-linux-gnueabihf- CROSS_COMPILE_core=aarch64-linux-gnu- CROSS_COMPILE_ta_arm64=aarch64-linux-gnu- CROSS_COMPILE_ta_arm32=arm-linux-gnueabihf- PATH=${AARCH64_GCC}:${PATH} make PLATFORM=hikey-${PLATFORM} CFG_ARM64_core=y
+		CROSS_COMPILE=arm-linux-gnueabihf- CROSS_COMPILE_core=aarch64-linux-gnu- CROSS_COMPILE_ta_arm64=aarch64-linux-gnu- CROSS_COMPILE_ta_arm32=arm-linux-gnueabihf- PATH=${AARCH64_GCC}:${PATH} make PLATFORM=hikey-${PLATFORM} CFG_ARM64_core=y DEBUG=${BUILD_DEBUG}
 		if [ $? != 0 ]; then
 			echo "Fail to build OPTEE ($?)"
 			exit
