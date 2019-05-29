@@ -14,7 +14,7 @@ OBJCOPY=$(CROSS_COMPILE)objcopy
 BL1=bl1.bin
 BL2=bl2.bin
 NS_BL1U=fastboot.bin
-PTABLE_LST?=aosp-8g
+PTABLE_LST?=aosp-8g aosp-4g
 
 .PHONY: all
 all: l-loader.bin prm_ptable.img recovery.bin
