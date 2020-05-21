@@ -10,24 +10,29 @@ then
 	exec bash "$0" "$@"
 fi
 
-BUILD_OPTION=DEBUG
+: ${BUILD_OPTION:=DEBUG}
 #BUILD_OPTION=RELEASE
 AARCH64_GCC=LINARO_GCC_7_2    # Prefer to use Linaro GCC >= 7.1.1. Otherwise, user may meet some toolchain issues.
+#AARCH64_GCC=ANDROID_GCC_4_9
 #CLANG=CLANG_5_0               # Prefer to use CLANG >= 3.9. Since LLVMgold.so is missing in CLANG 3.8.
 #GENERATE_PTABLE=1
 #EDK2_PLATFORM=1
-OPTEE=1
+: ${OPTEE:=1}
 #TBB=1                         # Trusted Board Boot
+: ${CLEAN:=1}
 
 # l-loader on hikey and optee need AARCH32_GCC
-AARCH32_GCC=/opt/toolchain/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin/
+#AARCH32_GCC=/opt/toolchain/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin/
+AARCH32_GCC=/home/victor.chong/work/swg/build/toolchains83/aarch32/bin/
 PATH=${AARCH32_GCC}:${PATH} && export PATH
 
 # Setup environment variables that are used in uefi-tools
 case "${AARCH64_GCC}" in
-"ARNDROID_GCC_4_9")
+"ANDROID_GCC_4_9")
 	AARCH64_GCC_4_9=/opt/toolchain/aarch64-linux-android-4.9.git/bin/
+	#AARCH64_GCC_4_9=/home/victor.chong/work/swg/aosp/master/prebuilts/clang/host/linux-x86/clang-r370808/bin/
 	PATH=${AARCH64_GCC_4_9}:${PATH} && export PATH
+	echo "which clang = $(which clang)"
 	export AARCH64_TOOLCHAIN=GCC49
 	CROSS_COMPILE=aarch64-linux-android-
 	;;
@@ -39,6 +44,7 @@ case "${AARCH64_GCC}" in
 	;;
 "LINARO_GCC_7_2")
 	AARCH64_GCC_7_2=/opt/toolchain/gcc-linaro-7.2.1-2017.11-x86_64_aarch64-linux-gnu/bin/
+	#AARCH64_GCC_7_2=/home/victor.chong/work/swg/build/toolchains83/aarch64/bin/
 	PATH=${AARCH64_GCC_7_2}:${PATH} && export PATH
 	export AARCH64_TOOLCHAIN=GCC5
 	CROSS_COMPILE=aarch64-linux-gnu-
@@ -69,6 +75,20 @@ case "${CLANG}" in
 	;;
 esac
 
+if [ $CLANG ]; then
+	case "${CLANG_PATH}" in
+	"")
+		echo "Please export CLANG_PATH=/path/to/clang/"
+		echo "Please NOTE the trailing forward slash!"
+		exit
+		;;
+	*)
+		PATH=${CLANG_PATH}:${PATH} && export PATH
+		type clang || { echo >&2 "Cannot find clang in ${CLANG_PATH}"; exit ; }
+		;;
+	esac
+fi
+
 case "$1" in
 "hikey")
 	PLATFORM=hikey
@@ -86,7 +106,7 @@ case "$1" in
 	;;
 esac
 
-if [ -d "${PWD}/edk2" ] && [ -d "${PWD}/arm-trusted-firmware" ] && [ -d "${PWD}/l-loader" ]; then
+if [ -d "${PWD}/edk2" ] && [ -d "${PWD}/trusted-firmware-a" ] && [ -d "${PWD}/l-loader" ]; then
 	# Check whether source code are available in ${PWD}
 	if [ ${TBB} ]; then
 		if [ ! -d "${PWD}/mbedtls" ]; then
@@ -96,7 +116,7 @@ if [ -d "${PWD}/edk2" ] && [ -d "${PWD}/arm-trusted-firmware" ] && [ -d "${PWD}/
 	fi
 	BUILD_PATH=${PWD}
 	echo "Find source code in ${PWD}"
-elif [ -d "${PWD}/../edk2" ] && [ -d "${PWD}/../arm-trusted-firmware" ] && [ -d "${PWD}/../l-loader" ]; then
+elif [ -d "${PWD}/../edk2" ] && [ -d "${PWD}/../trusted-firmware-a" ] && [ -d "${PWD}/../l-loader" ]; then
 	# Check whether source code are available in parent of ${PWD}
 	if [ ${TBB} ]; then
 		if [ ! -d "${PWD}/../mbedtls" ]; then
@@ -129,23 +149,28 @@ case "$PLATFORM" in
 	;;
 esac
 
-# Always clean build EDK2
-rm -f ${BUILD_PATH}/l-loader/l-loader.bin
-rm -fr ${BUILD_PATH}/arm-trusted-firmware/build
-rm -fr ${BUILD_PATH}/atf-fastboot/build
-cd ${EDK2_DIR}/BaseTools
-make clean
-rm -fr ${BUILD_PATH}/Build/
-rm -fr ${EDK2_DIR}/Build/
-rm -f ${EDK2_DIR}/Conf/.cache
-rm -f ${EDK2_DIR}/Conf/build_rule.txt
-rm -f ${EDK2_DIR}/Conf/target.txt
-rm -f ${EDK2_DIR}/Conf/tools_def.txt
-rm -f ${EDK2_OUTPUT_DIR}/FV/bl1.bin
-rm -f ${EDK2_OUTPUT_DIR}/FV/fip.bin
-rm -f ${EDK2_OUTPUT_DIR}/FV/BL33_AP_UEFI.fd
-if [ $OPTEE ]; then
+# Clean build EDK2
+if [ X"$CLEAN" = X"1" ]; then
+	rm -f ${BUILD_PATH}/l-loader/l-loader.bin
+	rm -fr ${BUILD_PATH}/trusted-firmware-a/build
+	rm -fr ${BUILD_PATH}/atf-fastboot/build
+	cd ${EDK2_DIR}/BaseTools
+	make clean
+	rm -fr ${BUILD_PATH}/Build/
+	rm -fr ${EDK2_DIR}/Build/
+	rm -f ${EDK2_DIR}/Conf/.cache
+	rm -f ${EDK2_DIR}/Conf/build_rule.txt
+	rm -f ${EDK2_DIR}/Conf/target.txt
+	rm -f ${EDK2_DIR}/Conf/tools_def.txt
+	rm -f ${EDK2_OUTPUT_DIR}/FV/bl1.bin
+	rm -f ${EDK2_OUTPUT_DIR}/FV/fip.bin
+	rm -f ${EDK2_OUTPUT_DIR}/FV/BL33_AP_UEFI.fd
+	if [ X"$OPTEE" = X"1" ]; then
+		rm -fr ${BUILD_PATH}/optee_os/out
+	fi
+else
 	rm -fr ${BUILD_PATH}/optee_os/out
+	echo "Skip cleaning builds"
 fi
 sync
 
@@ -190,9 +215,9 @@ function do_symlink()
 {
 	# Locate output files of UEFI & Arm Trust Firmware
 	cd ${BUILD_PATH}/l-loader
-	ln -sf ../arm-trusted-firmware/build/${PLATFORM}/$(echo ${BUILD_OPTION,,})/bl1.bin
-	ln -sf ../arm-trusted-firmware/build/${PLATFORM}/$(echo ${BUILD_OPTION,,})/bl2.bin
-	ln -sf ../arm-trusted-firmware/build/${PLATFORM}/$(echo ${BUILD_OPTION,,})/fip.bin
+	ln -sf ../trusted-firmware-a/build/${PLATFORM}/$(echo ${BUILD_OPTION,,})/bl1.bin
+	ln -sf ../trusted-firmware-a/build/${PLATFORM}/$(echo ${BUILD_OPTION,,})/bl2.bin
+	ln -sf ../trusted-firmware-a/build/${PLATFORM}/$(echo ${BUILD_OPTION,,})/fip.bin
 	if [ -f ${EDK2_OUTPUT_DIR}/FV/BL33_AP_UEFI.fd ]; then
 		ln -sf ${EDK2_OUTPUT_DIR}/FV/BL33_AP_UEFI.fd
 	fi
@@ -211,23 +236,24 @@ function do_build()
 		case "${PLATFORM}" in
 		"hikey")
 			DSC=Platform/Hisilicon/HiKey/HiKey.dsc
-			SCP_BL2=../edk2-non-osi/Platform/Hisilicon/HiKey/mcuimage.bin
+			SCP_BL2=${BUILD_PATH}/edk2-non-osi/Platform/Hisilicon/HiKey/mcuimage.bin
 			;;
 		"hikey960")
 			DSC=Platform/Hisilicon/HiKey960/HiKey960.dsc
-			SCP_BL2=../edk2-non-osi/Platform/Hisilicon/HiKey960/lpm3.img
+			SCP_BL2=${BUILD_PATH}/edk2-non-osi/Platform/Hisilicon/HiKey960/lpm3.img
 			;;
 		esac
 	else
+		ln -sf ${BUILD_PATH}/OpenPlatformPkg ${EDK2_DIR}/
 		export PACKAGES_PATH=${WORKSPACE}/edk2
 		case "${PLATFORM}" in
 		"hikey")
 			DSC=OpenPlatformPkg/Platforms/Hisilicon/HiKey/HiKey.dsc
-			SCP_BL2=../edk2/OpenPlatformPkg/Platforms/Hisilicon/HiKey/Binary/mcuimage.bin
+			SCP_BL2=${BUILD_PATH}/edk2/OpenPlatformPkg/Platforms/Hisilicon/HiKey/Binary/mcuimage.bin
 			;;
 		"hikey960")
 			DSC=OpenPlatformPkg/Platforms/Hisilicon/HiKey960/HiKey960.dsc
-			SCP_BL2=../edk2/OpenPlatformPkg/Platforms/Hisilicon/HiKey960/Binary/lpm3.img
+			SCP_BL2=${BUILD_PATH}/edk2/OpenPlatformPkg/Platforms/Hisilicon/HiKey960/Binary/lpm3.img
 			;;
 		esac
 	fi
@@ -243,18 +269,26 @@ function do_build()
 		exit
 	fi
 	# Build OPTEE
-	if [ $OPTEE ]; then
+	if [ X"$OPTEE" = X"1" ]; then
 		cd ${BUILD_PATH}/optee_os
-		CROSS_COMPILE=arm-linux-gnueabihf- CROSS_COMPILE_core=aarch64-linux-gnu- CROSS_COMPILE_ta_arm64=aarch64-linux-gnu- CROSS_COMPILE_ta_arm32=arm-linux-gnueabihf- PATH=${AARCH64_GCC}:${PATH} make PLATFORM=hikey-${PLATFORM} CFG_ARM64_core=y DEBUG=${BUILD_DEBUG}
+		if [ $CLANG ]; then
+			OPTEE_OS_COMPILERS="CROSS_COMPILE64=aarch64-linux-android- CROSS_COMPILE32=arm-linux-androideabi- COMPILER=clang"
+		else
+			OPTEE_OS_COMPILERS="CROSS_COMPILE32=arm-linux-gnueabihf- CROSS_COMPILE64=aarch64-linux-gnu-"
+		fi
+		if [ X"${BUILD_DEBUG}" = X"1" ]; then
+			OPTEE_OS_LOGLVL="CFG_TEE_CORE_LOG_LEVEL=3 CFG_TEE_TA_LOG_LEVEL=3"
+		fi
+		PATH=${AARCH64_GCC}:${PATH} make ${OPTEE_OS_COMPILERS} PLATFORM=hikey-${PLATFORM} CFG_ARM64_core=y DEBUG=${BUILD_DEBUG} ${OPTEE_OS_LOGLVL}
 		if [ $? != 0 ]; then
 			echo "Fail to build OPTEE ($?)"
 			exit
 		fi
 	fi
 	# Build ARM Trusted Firmware
-	cd ${BUILD_PATH}/arm-trusted-firmware
+	cd ${BUILD_PATH}/trusted-firmware-a
 	BL33=${EDK2_OUTPUT_DIR}/FV/BL33_AP_UEFI.fd
-	if [ $OPTEE ]; then
+	if [ X"$OPTEE" = X"1" ]; then
 		BL32=../optee_os/out/arm-plat-hikey/core/tee-header_v2.bin
 		BL32_EXTRA1=../optee_os/out/arm-plat-hikey/core/tee-pager_v2.bin
 		BL32_EXTRA2=../optee_os/out/arm-plat-hikey/core/tee-pageable_v2.bin
