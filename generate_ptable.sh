@@ -188,6 +188,7 @@ esac
 
 # get the primary partition table
 dd if=${TEMP_FILE} of=prm_ptable.img bs=${SECTOR_SIZE} count=${PRIMARY_SECTORS}
+dd if=${TEMP_FILE} of=ptable-${PTABLE}.img bs=${SECTOR_SIZE} count=${PRIMARY_SECTORS}
 
 BK_PTABLE_LBA=$(expr ${SECTOR_NUMBER} - ${SECONDARY_SECTORS})
 dd if=${TEMP_FILE} of=sec_ptable.img skip=${BK_PTABLE_LBA} bs=${SECTOR_SIZE} count=${SECONDARY_SECTORS}

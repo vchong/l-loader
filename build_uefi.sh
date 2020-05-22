@@ -15,7 +15,7 @@ fi
 AARCH64_GCC=LINARO_GCC_7_2    # Prefer to use Linaro GCC >= 7.1.1. Otherwise, user may meet some toolchain issues.
 #AARCH64_GCC=ANDROID_GCC_4_9
 #CLANG=CLANG_5_0               # Prefer to use CLANG >= 3.9. Since LLVMgold.so is missing in CLANG 3.8.
-#GENERATE_PTABLE=1
+GENERATE_PTABLE=1
 #EDK2_PLATFORM=1
 : ${OPTEE:=1}
 #TBB=1                         # Trusted Board Boot
@@ -150,7 +150,7 @@ case "$PLATFORM" in
 esac
 
 # Clean build EDK2
-if [ X"$CLEAN" = X"1" ]; then
+if [ "$CLEAN" -ge "1" ]; then
 	rm -f ${BUILD_PATH}/l-loader/l-loader.bin
 	rm -fr ${BUILD_PATH}/trusted-firmware-a/build
 	rm -fr ${BUILD_PATH}/atf-fastboot/build
@@ -168,8 +168,10 @@ if [ X"$CLEAN" = X"1" ]; then
 	if [ X"$OPTEE" = X"1" ]; then
 		rm -fr ${BUILD_PATH}/optee_os/out
 	fi
+	if [ "$CLEAN" -gt "1" ]; then
+		exit
+	fi
 else
-	rm -fr ${BUILD_PATH}/optee_os/out
 	echo "Skip cleaning builds"
 fi
 sync
@@ -244,6 +246,9 @@ function do_build()
 			;;
 		esac
 	else
+		if [ -f "${EDK2_DIR}/OpenPlatformPkg" ]; then
+			unlink ${EDK2_DIR}/OpenPlatformPkg
+		fi
 		ln -sf ${BUILD_PATH}/OpenPlatformPkg ${EDK2_DIR}/
 		export PACKAGES_PATH=${WORKSPACE}/edk2
 		case "${PLATFORM}" in
@@ -322,6 +327,7 @@ case "${PLATFORM}" in
 
 	# Generate partition table
 	if [ $GENERATE_PTABLE ]; then
+		PTABLE=aosp-4g SECTOR_SIZE=512 bash -x generate_ptable.sh
 		PTABLE=aosp-8g SECTOR_SIZE=512 bash -x generate_ptable.sh
 	fi
 
