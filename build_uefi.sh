@@ -4,6 +4,8 @@
 # Usage: bash build_uefi.sh {platform}
 #
 
+set -x
+
 # Execute bash shell if use other shell
 if [ -z "$BASH_VERSION" ]
 then
@@ -22,8 +24,8 @@ GENERATE_PTABLE=1
 : ${CLEAN:=1}
 
 # l-loader on hikey and optee need AARCH32_GCC
-#AARCH32_GCC=/opt/toolchain/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin/
-AARCH32_GCC=/home/victor.chong/work/swg/build/toolchains83/aarch32/bin/
+AARCH32_GCC=/opt/toolchain/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin/
+#AARCH32_GCC=/home/victor.chong/work/swg/build/toolchains83/aarch32/bin/
 PATH=${AARCH32_GCC}:${PATH} && export PATH
 
 # Setup environment variables that are used in uefi-tools
@@ -152,8 +154,11 @@ esac
 
 # Clean build EDK2
 if [ "$CLEAN" -ge "1" ]; then
-	unlink ${BUILD_PATH}/l-loader/fip.bin
+	if [ -f ${BUILD_PATH}/l-loader/fip.bin ]; then
+		unlink ${BUILD_PATH}/l-loader/fip.bin
+	fi
 	rm -f ${BUILD_PATH}/l-loader/l-loader.bin
+	rm -f ${BUILD_PATH}/l-loader/ptable-*.img
 	rm -fr ${BUILD_PATH}/trusted-firmware-a/build
 	rm -fr ${BUILD_PATH}/atf-fastboot/build
 	cd ${EDK2_DIR}/BaseTools
