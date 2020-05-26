@@ -151,6 +151,7 @@ esac
 
 # Clean build EDK2
 if [ "$CLEAN" -ge "1" ]; then
+	unlink ${BUILD_PATH}/l-loader/fip.bin
 	rm -f ${BUILD_PATH}/l-loader/l-loader.bin
 	rm -fr ${BUILD_PATH}/trusted-firmware-a/build
 	rm -fr ${BUILD_PATH}/atf-fastboot/build
