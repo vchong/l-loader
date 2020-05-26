@@ -4,7 +4,7 @@
 # Usage: bash build_uefi.sh {platform}
 #
 
-set -x
+#set -x
 
 # Execute bash shell if use other shell
 if [ -z "$BASH_VERSION" ]
