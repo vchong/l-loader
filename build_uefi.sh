@@ -85,6 +85,7 @@ if [ $CLANG ]; then
 	*)
 		PATH=${CLANG_PATH}:${PATH} && export PATH
 		type clang || { echo >&2 "Cannot find clang in ${CLANG_PATH}"; exit ; }
+		clang --version
 		;;
 	esac
 fi
