@@ -201,13 +201,16 @@ case "${BUILD_OPTION}" in
 esac
 
 # Build fastboot for HiKey
+echo "Building atf-fastboot for HiKey"
 case "${PLATFORM}" in
 "hikey")
 	cd ${BUILD_PATH}/atf-fastboot
 	CROSS_COMPILE=aarch64-linux-gnu- make ${TC_FLAGS} PLAT=${PLATFORM} DEBUG=${BUILD_DEBUG}
 	if [ $? != 0 ]; then
-		echo "Fail to build fastboot ($?)"
+		echo "Fail to build atf-fastboot ($?)"
 		exit
+	else
+		echo "Ok building atf-fastboot"
 	fi
 	# Convert "DEBUG"/"RELEASE" to "debug"/"release"
 	if [ -f ${BUILD_PATH}/atf-fastboot/build/${PLATFORM}/$(echo ${BUILD_OPTION,,})/bl1.bin ]; then
