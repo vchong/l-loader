@@ -331,25 +331,31 @@ do_symlink
 case "${PLATFORM}" in
 "hikey")
 	# Patch aarch64 mode on bl1.bin. Then bind it with fastboot.
+	echo "Build hikey recovery.bin"
 	make ${TC_FLAGS} -f ${PLATFORM}.mk recovery.bin
 	# Patch aarch64 mode on bl2.bin
+	echo "Build hikey l-loader.bin"
 	make ${TC_FLAGS} -f ${PLATFORM}.mk l-loader.bin
 
 	# Generate partition table
 	if [ $GENERATE_PTABLE ]; then
+		echo "Build hikey ptables"
 		make ${TC_FLAGS} -f ${PLATFORM}.mk prm_ptable.img
 	fi
 
 	;;
 "hikey960")
 	# Bind bl1.bin with BL33
+	echo "Build hikey960 recovery.bin"
 	make -f ${PLATFORM}.mk recovery.bin
 	# Use bl2.bin as l-loader
+	echo "Build hikey960 l-loader.bin"
 	make -f ${PLATFORM}.mk l-loader.bin
 
 	# Generate partition table with a patched sgdisk to force
 	# default alignment (2048) and sector size (4096)
 	if [ $GENERATE_PTABLE ]; then
+		echo "Build hikey960 ptables"
 		make ${TC_FLAGS} -f ${PLATFORM}.mk prm_ptable.img
 	fi
 	;;
