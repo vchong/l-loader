@@ -337,8 +337,7 @@ case "${PLATFORM}" in
 
 	# Generate partition table
 	if [ $GENERATE_PTABLE ]; then
-		PTABLE=aosp-4g SECTOR_SIZE=512 bash -x generate_ptable.sh
-		PTABLE=aosp-8g SECTOR_SIZE=512 bash -x generate_ptable.sh
+		make ${TC_FLAGS} -f ${PLATFORM}.mk prm_ptable.img
 	fi
 
 	;;
@@ -351,7 +350,7 @@ case "${PLATFORM}" in
 	# Generate partition table with a patched sgdisk to force
 	# default alignment (2048) and sector size (4096)
 	if [ $GENERATE_PTABLE ]; then
-		PTABLE=aosp-32g SECTOR_SIZE=4096 SGDISK=./sgdisk bash -x generate_ptable.sh
+		make ${TC_FLAGS} -f ${PLATFORM}.mk prm_ptable.img
 	fi
 	;;
 esac
