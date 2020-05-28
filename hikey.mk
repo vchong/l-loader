@@ -3,6 +3,7 @@ ifeq ($(notdir $(CC)), clang)
 	LD=ld.lld
 	OBJCOPY=llvm-objcopy
 	CFLAGS=-target arm-linux-gnueabihf
+	#CFLAGS=-target aarch64-linux-gnu
 	OBJCOPY=llvm-objcopy
 else
 	CROSS_COMPILE=arm-linux-gnueabihf-

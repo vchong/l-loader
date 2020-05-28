@@ -295,7 +295,9 @@ function do_build()
 		if [ X"${BUILD_DEBUG}" = X"1" ]; then
 			OPTEE_OS_LOGLVL="CFG_TEE_CORE_LOG_LEVEL=3 CFG_TEE_TA_LOG_LEVEL=3"
 		fi
-		PATH=${AARCH64_GCC}:${PATH} make ${OPTEE_OS_COMPILERS} PLATFORM=hikey-${PLATFORM} CFG_ARM64_core=y DEBUG=${BUILD_DEBUG} ${OPTEE_OS_LOGLVL}
+		# OPTEE_EXTRA_ARGS is passed in by caller of this script!
+		echo "OPTEE_EXTRA_ARGS = ${OPTEE_EXTRA_ARGS}"
+		PATH=${AARCH64_GCC}:${PATH} make ${OPTEE_OS_COMPILERS} PLATFORM=hikey-${PLATFORM} CFG_ARM64_core=y DEBUG=${BUILD_DEBUG} ${OPTEE_OS_LOGLVL} ${OPTEE_EXTRA_ARGS}
 		if [ $? != 0 ]; then
 			echo "Fail to build OPTEE ($?)"
 			exit
