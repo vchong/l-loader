@@ -13,6 +13,11 @@ else
 	OBJCOPY=$(CROSS_COMPILE)objcopy
 endif
 
+$(info $$CC is [${CC}])
+$(info $$LD is [${LD}])
+$(info $$CFLAGS is [${CFLAGS}])
+$(info $$OBJCOPY is [${OBJCOPY}])
+
 BL1=bl1.bin
 BL2=bl2.bin
 NS_BL1U=fastboot.bin
