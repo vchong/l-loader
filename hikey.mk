@@ -1,5 +1,4 @@
-ifeq ($(notdir $(CC)), clang)
-	CC=clang
+ifneq ($(findstring clang,$(notdir $(CC))),)
 	LD=ld.lld
 	OBJCOPY=llvm-objcopy
 	CFLAGS=-target arm-linux-gnueabihf
