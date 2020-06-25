@@ -14,7 +14,7 @@ endif
 BL1=bl1.bin
 BL2=bl2.bin
 NS_BL1U=fastboot.bin
-PTABLE_LST?=aosp-8g aosp-4g
+PTABLE_LST?=linux-4g linux-8g aosp-4g aosp-8g
 
 .PHONY: all
 all: l-loader.bin prm_ptable.img recovery.bin
