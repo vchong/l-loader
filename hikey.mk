@@ -1,15 +1,15 @@
-CROSS_COMPILE=arm-linux-gnueabihf-
-
 ifeq ($(notdir $(CC)), clang)
 	CC=clang
 	LD=ld.lld
+	OBJCOPY=llvm-objcopy
 	CFLAGS=-target arm-linux-gnueabihf
 else
+	CROSS_COMPILE=arm-linux-gnueabihf-
 	CC=$(CROSS_COMPILE)gcc
 	LD=$(CROSS_COMPILE)ld
+	OBJCOPY=$(CROSS_COMPILE)objcopy
 	CFLAGS=-mcpu=cortex-a53
 endif
-OBJCOPY=$(CROSS_COMPILE)objcopy
 
 BL1=bl1.bin
 BL2=bl2.bin
