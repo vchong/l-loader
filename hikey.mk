@@ -31,7 +31,11 @@ temp: loader
 l-loader.bin: temp $(BL2)
 	python gen_loader_hikey.py -o $@ --img_loader=temp --img_bl1=$(BL2)
 
-prm_ptable.img:
+.PHONY: check_sgdisk
+check_sgdisk:
+	@which sgdisk || (echo "sgdisk NOT found. Please install it!"; exit 1)
+
+prm_ptable.img: check_sgdisk
 	for ptable in $(PTABLE_LST); do \
 		PTABLE=$${ptable} SECTOR_SIZE=512 bash -x generate_ptable.sh;\
 		cp prm_ptable.img ptable-$${ptable}.img;\
