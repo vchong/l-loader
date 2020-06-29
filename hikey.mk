@@ -1,6 +1,5 @@
 ifneq ($(findstring clang,$(notdir $(CC))),)
 	LD=ld.lld
-	OBJCOPY=llvm-objcopy
 	CFLAGS=-target arm-linux-gnueabihf
 	#CFLAGS=-target aarch64-linux-gnu
 	OBJCOPY=llvm-objcopy
@@ -8,7 +7,6 @@ else
 	CROSS_COMPILE=arm-linux-gnueabihf-
 	CC=$(CROSS_COMPILE)gcc
 	LD=$(CROSS_COMPILE)ld
-	OBJCOPY=$(CROSS_COMPILE)objcopy
 	CFLAGS=-mcpu=cortex-a53
 	OBJCOPY=$(CROSS_COMPILE)objcopy
 endif
