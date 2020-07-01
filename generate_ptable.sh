@@ -55,10 +55,10 @@ case ${PTABLE} in
     ${SGDISK} -n 2:0:+1M -t 2:0700 -u 2:61A36FC1-8EFB-4899-84D8-B61642EFA723 -c 2:"vrl_backup" ${TEMP_FILE}
     #[3: mcuimage: 3M-4M]
     ${SGDISK} -n 3:0:+1M -t 3:0700 -u 3:65007411-962D-4781-9B2C-51DD7DF22CC3 -c 3:"mcuimage" ${TEMP_FILE}
-    #[4: fastboot: 4M-12M]
-    ${SGDISK} -n 4:0:+8M -t 4:EF02 -u 4:496847AB-56A1-4CD5-A1AD-47F4ACF055C9 -c 4:"fastboot" ${TEMP_FILE}
-    #[5: nvme: 12M-14M]
-    ${SGDISK} -n 5:0:+2M -t 5:0700 -u 5:00354BCD-BBCB-4CB3-B5AE-CDEFCB5DAC43 -c 5:"nvme" ${TEMP_FILE}
+    #[4: fastboot: 4M-8M]
+    ${SGDISK} -n 4:0:+4M -t 4:EF02 -u 4:496847AB-56A1-4CD5-A1AD-47F4ACF055C9 -c 4:"fastboot" ${TEMP_FILE}
+    #[5: nvme: 8M-14M]
+    ${SGDISK} -n 5:0:+6M -t 5:8300 -u 5:00354BCD-BBCB-4CB3-B5AE-CDEFCB5DAC43 -c 5:"nvme" ${TEMP_FILE}
     #[6: boot: 14M-78M]
     ${SGDISK} -n 6:0:+64M -t 6:EF00 -u 6:5C0F213C-17E1-4149-88C8-8B50FB4EC70E -c 6:"boot" ${TEMP_FILE}
     #[7: vendor: 78M-334M]
@@ -121,10 +121,10 @@ case ${PTABLE} in
     ${SGDISK} -U 2CB85345-6A91-4043-8203-723F0D28FBE8 -v ${TEMP_FILE}
     #[1: xloader_reserved1: 1M-2M]
     ${SGDISK} -n 1:0:+1M -t 1:0700 -u 1:697c41e0-7a59-4dfa-a9a6-aa43ac5be684 -c 1:"xloader_reserved1" ${TEMP_FILE}
-    #[2: fastboot: 2M-14M]
-    ${SGDISK} -n 2:0:+12M -t 2:0700 -u 2:3f5f8c48-4402-4ace-9058-30bfea4fa53f -c 2:"fastboot" ${TEMP_FILE}
-    #[3: nvme: 14M-20M]
-    ${SGDISK} -n 3:0:+6M -t 3:0700 -u 3:e2f5e2a9-c9b7-4089-9859-4498f1d3ef7e -c 3:"nvme" ${TEMP_FILE}
+    #[2: fastboot: 2M-12M]
+    ${SGDISK} -n 2:0:+10M -t 2:0700 -u 2:3f5f8c48-4402-4ace-9058-30bfea4fa53f -c 2:"fastboot" ${TEMP_FILE}
+    #[3: nvme: 12M-20M]
+    ${SGDISK} -n 3:0:+8M -t 3:8300 -u 3:e2f5e2a9-c9b7-4089-9859-4498f1d3ef7e -c 3:"nvme" ${TEMP_FILE}
     #[4: fip: 20M-32M]
     ${SGDISK} -n 4:0:+12M -t 3:0700 -u 4:dc1a888e-f17c-4964-92d6-f8fcc402ed8b -c 4:"fip" ${TEMP_FILE}
     #[5: cache: 32M-288M]
