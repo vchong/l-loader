@@ -23,12 +23,15 @@ case ${PTABLE} in
     ;;
   aosp-4g|linux-4g)
     SECTOR_NUMBER=7471104
+    echo "SECTOR_NUMBER = ${SECTOR_NUMBER}"
     ;;
   aosp-8g|linux-8g|swap-8g)
     SECTOR_NUMBER=15269888
+    echo "SECTOR_NUMBER = ${SECTOR_NUMBER}"
     ;;
   aosp-32g*|linux-32g)
     SECTOR_NUMBER=62447650    # count with 512-byte block size
+    echo "SECTOR_NUMBER = ${SECTOR_NUMBER}"
     ;;
   aosp-64g|linux-64g)
     SECTOR_NUMBER=124895300   # count with 512-byte block size
@@ -37,6 +40,10 @@ esac
 
 SECTOR_ALIGNMENT=$(expr ${SECTOR_SIZE} / 512)
 SECTOR_NUMBER=$(expr '(' ${SECTOR_NUMBER} '*' 512 + ${SECTOR_SIZE} - 1 ')' / ${SECTOR_SIZE})
+
+echo "SECTOR_SIZE = ${SECTOR_SIZE}"
+echo "SECTOR_ALIGNMENT = ${SECTOR_ALIGNMENT}"
+echo "SECTOR_NUMBER from formula = ${SECTOR_NUMBER}"
 
 # get the partition table
 case ${PTABLE} in
