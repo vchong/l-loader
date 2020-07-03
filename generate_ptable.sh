@@ -65,7 +65,7 @@ case ${PTABLE} in
     #[4: fastboot: 4M-8M]
     ${SGDISK} -n 4:0:+4M -t 4:EF02 -u 4:496847AB-56A1-4CD5-A1AD-47F4ACF055C9 -c 4:"fastboot" ${TEMP_FILE}
     #[5: nvme: 8M-14M]
-    ${SGDISK} -n 5:0:+6M -t 5:8300 -u 5:00354BCD-BBCB-4CB3-B5AE-CDEFCB5DAC43 -c 5:"nvme" ${TEMP_FILE}
+    ${SGDISK} -n 5:0:+6M -t 5:a026 -u 5:6C95E238-E343-4BA8-B489-8681ED22AD0B -c 5:"nvme" ${TEMP_FILE}
     #[6: boot: 14M-78M]
     ${SGDISK} -n 6:0:+64M -t 6:EF00 -u 6:5C0F213C-17E1-4149-88C8-8B50FB4EC70E -c 6:"boot" ${TEMP_FILE}
     #[7: vendor: 78M-334M]
@@ -131,7 +131,7 @@ case ${PTABLE} in
     #[2: fastboot: 2M-12M]
     ${SGDISK} -n 2:0:+10M -t 2:0700 -u 2:3f5f8c48-4402-4ace-9058-30bfea4fa53f -c 2:"fastboot" ${TEMP_FILE}
     #[3: nvme: 12M-20M]
-    ${SGDISK} -n 3:0:+8M -t 3:8300 -u 3:e2f5e2a9-c9b7-4089-9859-4498f1d3ef7e -c 3:"nvme" ${TEMP_FILE}
+    ${SGDISK} -n 3:0:+8M -t 3:a026 -u 3:6C95E238-E343-4BA8-B489-8681ED22AD0B -c 3:"nvme" ${TEMP_FILE}
     #[4: fip: 20M-32M]
     ${SGDISK} -n 4:0:+12M -t 3:0700 -u 4:dc1a888e-f17c-4964-92d6-f8fcc402ed8b -c 4:"fip" ${TEMP_FILE}
     #[5: cache: 32M-288M]
