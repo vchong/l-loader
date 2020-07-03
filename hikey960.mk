@@ -20,4 +20,4 @@ recovery.bin: $(BL1) $(NS_BL1U)
 
 .PHONY: clean
 clean:
-	rm -f prm_ptable.img l-loader.bin recovery.bin
+	rm -f ptable*.img prm_ptable.img l-loader.bin recovery.bin

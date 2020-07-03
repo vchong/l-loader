@@ -54,4 +54,4 @@ recovery.bin: ver temp $(BL1) $(NS_BL1U)
 
 .PHONY: clean
 clean:
-	rm -f *.o l-loader.bin prm_ptable.img recovery.bin loader temp
+	rm -f *.o l-loader.bin ptable*.img prm_ptable.img recovery.bin loader temp
