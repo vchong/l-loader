@@ -93,10 +93,10 @@ if [ $CLANG ]; then
 fi
 
 case "$1" in
-"hikey")
+"hikey" | "hikey_tv")
 	PLATFORM=hikey
 	;;
-"hikey960")
+"hikey960" | "hikey960_tv")
 	PLATFORM=hikey960
 	;;
 "")
